@@ -1,0 +1,54 @@
+{
+  "authors" : [
+    "kuerbis"
+  ],
+  "build-depends" : [ ],
+  "depends" : [
+    "DBIish",
+    "File::Find",
+    "File::Temp",
+    "JSON::Fast",
+    "Term::Choose:ver<1.5.4+>",
+    "Term::Choose::Util:ver<1.2.6+>",
+    "Term::Form:ver<1.2.2+>",
+    "Term::TablePrint:ver<1.4.4+>",
+    "Text::CSV"
+  ],
+  "description" : "Browse SQLite/PostgreSQL databases and their tables interactively.",
+  "license" : "Artistic-2.0",
+  "name" : "App::DBBrowser",
+  "perl" : "6.c",
+  "provides" : {
+    "App::DBBrowser" : "lib/App/DBBrowser.pm6",
+    "App::DBBrowser::AttachDB" : "lib/App/DBBrowser/AttachDB.pm6",
+    "App::DBBrowser::Auxil" : "lib/App/DBBrowser/Auxil.pm6",
+    "App::DBBrowser::CreateTable" : "lib/App/DBBrowser/CreateTable.pm6",
+    "App::DBBrowser::Credentials" : "lib/App/DBBrowser/Credentials.pm6",
+    "App::DBBrowser::DB" : "lib/App/DBBrowser/DB.pm6",
+    "App::DBBrowser::DB::Pg" : "lib/App/DBBrowser/DB/Pg.pm6",
+    "App::DBBrowser::DB::SQLite" : "lib/App/DBBrowser/DB/SQLite.pm6",
+    "App::DBBrowser::GetContent" : "lib/App/DBBrowser/GetContent.pm6",
+    "App::DBBrowser::GetContent::Filter" : "lib/App/DBBrowser/GetContent/Filter.pm6",
+    "App::DBBrowser::GetContent::ParseFile" : "lib/App/DBBrowser/GetContent/ParseFile.pm6",
+    "App::DBBrowser::Join" : "lib/App/DBBrowser/Join.pm6",
+    "App::DBBrowser::Opt::DBGet" : "lib/App/DBBrowser/Opt/DBGet.pm6",
+    "App::DBBrowser::Opt::DBSet" : "lib/App/DBBrowser/Opt/DBSet.pm6",
+    "App::DBBrowser::Opt::Get" : "lib/App/DBBrowser/Opt/Get.pm6",
+    "App::DBBrowser::Opt::Set" : "lib/App/DBBrowser/Opt/Set.pm6",
+    "App::DBBrowser::Subqueries" : "lib/App/DBBrowser/Subqueries.pm6",
+    "App::DBBrowser::Table" : "lib/App/DBBrowser/Table.pm6",
+    "App::DBBrowser::Table::Extensions" : "lib/App/DBBrowser/Table/Extensions.pm6",
+    "App::DBBrowser::Table::Functions" : "lib/App/DBBrowser/Table/Functions.pm6",
+    "App::DBBrowser::Table::Substatements" : "lib/App/DBBrowser/Table/Substatements.pm6",
+    "App::DBBrowser::Table::Substatements::Operators" : "lib/App/DBBrowser/Table/Substatements/Operators.pm6",
+    "App::DBBrowser::Table::WriteAccess" : "lib/App/DBBrowser/Table/WriteAccess.pm6",
+    "App::DBBrowser::Union" : "lib/App/DBBrowser/Union.pm6"
+  },
+  "resources" : [ ],
+  "source-url" : "git://github.com/kuerbis/App-DBBrowser-p6.git",
+  "tags" : [ ],
+  "test-depends" : [
+    "Test"
+  ],
+  "version" : "0.0.1"
+}
