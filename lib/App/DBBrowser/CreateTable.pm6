@@ -3,7 +3,7 @@ unit class App::DBBrowser::CreateTable;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
-no precompilation;
+#no precompilation;
 
 #use SQL::Type::Guess  qw(); # required
 

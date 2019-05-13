@@ -1,9 +1,9 @@
 use v6;
-unit class App::DBBrowser:ver<0.0.2>;
+unit class App::DBBrowser:ver<0.0.3>;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
-no precompilation;
+#no precompilation;
 
 use Term::Choose;
 use Term::Choose::Screen :clear, :hide-cursor, :show-cursor, :clr-to-bot;
@@ -508,7 +508,7 @@ method run {
                                 $sth.execute();
                             }
                             $!d<cols> = $sth.column-names();
-                            $sth.finish;
+                            $sth.finish();
                             $qt_columns = $ax.quote_simple_many( $!d<cols> );
                             CATCH { default {
                                 $ax.print_error_message( $_, 'Ordinary table' );
@@ -699,12 +699,14 @@ method !derived_table {
     }
     my $alias = $ax.alias( 'subqueries', $qt_table, 'From_SQ' );
     $qt_table ~= " AS " ~ $ax.quote_col_qualified( [ $alias ] );
-    $tmp.<table> = $qt_table;
+    $tmp<table> = $qt_table;
     $ax.print_sql( $tmp );
     my $sth = $!d<dbh>.prepare( "SELECT * FROM " ~ $qt_table ~ " LIMIT 0" );
-    my $result = $sth.execute();
-    $!d<cols> = $result.keys; #
-    $sth.finish(); #
+    if $!i<driver> ne 'SQLite' {
+        $sth.execute();
+    }
+    $!d<cols> = $sth.column-names();
+    $sth.finish();
     my $qt_columns = $ax.quote_simple_many( $!d<cols> );
     return $qt_table, $qt_columns;
 }

@@ -3,7 +3,7 @@ unit class App::DBBrowser::Opt::DBGet;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
-no precompilation;
+#no precompilation;
 
 use App::DBBrowser::Auxil;
 use App::DBBrowser::DB;

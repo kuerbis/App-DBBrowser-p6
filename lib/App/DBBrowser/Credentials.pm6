@@ -3,7 +3,7 @@ unit class App::DBBrowser::Credentials;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
-no precompilation;
+#no precompilation;
 
 use Term::Form;
 
