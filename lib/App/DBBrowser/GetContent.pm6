@@ -3,6 +3,7 @@ unit class App::DBBrowser::GetContent;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
+no precompilation;
 
 use Term::Choose;
 use Term::Choose::Screen :clear, :hide-cursor, :show-cursor;

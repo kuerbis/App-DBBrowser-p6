@@ -1,6 +1,10 @@
 use v6;
 unit class App::DBBrowser::Credentials;
 
+CONTROL { when CX::Warn { note $_; exit 1 } }
+use fatal;
+no precompilation;
+
 use Term::Form;
 
 

@@ -3,6 +3,7 @@ unit class App::DBBrowser::Union;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
+no precompilation;
 
 use Term::Choose;
 

@@ -1,8 +1,9 @@
 use v6;
-unit class App::DBBrowser:ver<0.0.1>;
+unit class App::DBBrowser:ver<0.0.2>;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
+no precompilation;
 
 use Term::Choose;
 use Term::Choose::Screen :clear, :hide-cursor, :show-cursor, :clr-to-bot;
@@ -687,7 +688,7 @@ method !derived_table {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     require App::DBBrowser::Subqueries;
     #use App::DBBrowser::Subqueries;
-    my $sq = App::DBBrowser::Subqueries.new( :$!i, :$!o, :$!d ); # You cannot create an instance of this type (Subqueries)
+    my $sq = ::("App::DBBrowser::Subqueries").new( :$!i, :$!o, :$!d ); # You cannot create an instance of this type (Subqueries)
     $!i<stmt_types> = [ 'Select' ];
     my $tmp = { table => '()' };
     $ax.reset_sql( $tmp );

@@ -1,6 +1,10 @@
 use v6;
 unit class App::DBBrowser::Opt::Set;
 
+CONTROL { when CX::Warn { note $_; exit 1 } }
+use fatal;
+no precompilation;
+
 #use Pod::To::Text;     # required
 #use Pod::load          # required
 

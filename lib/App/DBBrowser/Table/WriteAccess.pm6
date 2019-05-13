@@ -3,6 +3,7 @@ unit class App::DBBrowser::Table::WriteAccess;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
+no precompilation;
 
 use Term::Choose;
 use Term::Choose::Screen :hide-cursor; ## Term::TablePrint :1loop

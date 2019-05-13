@@ -1,6 +1,10 @@
 use v6;
 unit class App::DBBrowser::DB;
 
+CONTROL { when CX::Warn { note $_; exit 1 } }
+use fatal;
+no precompilation;
+
 use App::DBBrowser::Auxil;
 
 has $.i;

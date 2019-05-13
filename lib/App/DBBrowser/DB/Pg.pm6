@@ -1,6 +1,10 @@
 use v6;
 unit class App::DBBrowser::DB::Pg;
 
+CONTROL { when CX::Warn { note $_; exit 1 } }
+use fatal;
+no precompilation;
+
 use DBIish;
 
 use App::DBBrowser::Credentials;

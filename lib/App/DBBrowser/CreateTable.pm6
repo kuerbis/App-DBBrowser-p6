@@ -3,6 +3,7 @@ unit class App::DBBrowser::CreateTable;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
+no precompilation;
 
 #use SQL::Type::Guess  qw(); # required
 
@@ -109,7 +110,7 @@ method !_drop ( $sql, $type is copy ) {
 method create_view {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     require App::DBBrowser::Subqueries;
-    my $sq = App::DBBrowser::Subqueries.new( :$!i, :$!o, :$!d ); # You cannot create an instance of this type (Subqueries)
+    my $sq = ::("App::DBBrowser::Subqueries").new( :$!i, :$!o, :$!d ); # You cannot create an instance of this type (Subqueries)
     my $tf = Term::Form.new( :1loop );
     my $sql = {};
     $ax.reset_sql( $sql );

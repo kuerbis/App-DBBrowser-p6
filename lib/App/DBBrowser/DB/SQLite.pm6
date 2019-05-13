@@ -1,6 +1,10 @@
 use v6;
 unit class App::DBBrowser::DB::SQLite;
 
+CONTROL { when CX::Warn { note $_; exit 1 } }
+use fatal;
+no precompilation;
+
 use File::Find;
 use DBIish;
 
