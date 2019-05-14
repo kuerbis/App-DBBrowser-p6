@@ -21,24 +21,6 @@ multi MAIN ( *@sqlite_databases ) {
 
 
 
-multi MAIN ( Bool :$man ) {
-    require Pod::To::Text <&pod2text>;
-    my @lines;
-    for $=pod -> $pod-block {
-        for $pod-block.contents -> $pod-item {
-            @lines.push: ' ', |pod2text( $pod-item ).split: "\n";
-        }
-    }
-    #@lines.shift;
-    @lines.unshift: '=' x 75;
-    require Term::Choose;
-    my $tc = Term::Choose.new( :1loop );
-    $tc.pause( @lines, :2layout, :prompt(''), :0keep-header, :0table-expand, :empty('') );
-}
-
-
-
-
 =begin pod
 
 =head1 NAME
@@ -903,21 +885,6 @@ Copyright (C) 2019 Matthäus Kiem.
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 
 =end pod
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

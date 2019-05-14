@@ -16,7 +16,7 @@ use App::DBBrowser::Auxil;
 use App::DBBrowser::DB;
 use App::DBBrowser::GetContent;
 use App::DBBrowser::Table::WriteAccess;
-#require App::DBBrowser::Subqueries; # required
+#use App::DBBrowser::Subqueries; # required
 
 has $.i;
 has $.o;
@@ -110,7 +110,7 @@ method !_drop ( $sql, $type is copy ) {
 method create_view {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     require App::DBBrowser::Subqueries;
-    my $sq = ::("App::DBBrowser::Subqueries").new( :$!i, :$!o, :$!d ); # You cannot create an instance of this type (Subqueries)
+    my $sq = ::('App::DBBrowser::Subqueries').new( :$!i, :$!o, :$!d );
     my $tf = Term::Form.new( :1loop );
     my $sql = {};
     $ax.reset_sql( $sql );

@@ -48,9 +48,31 @@ method get_databases {
     return $user_db // [], $system_db // [];
 }
 
+
 method get_db_handle ( $db ) {
     my $dbh = $!P.get_db_handle( $db );
-    # sqlite3_create_function: regexp, truncate bit_length, char_length
+    if $!P.get_db_driver eq 'SQLite' {
+#        $dbh.sqlite_create_function( 'regexp', 3, -> $regex, $string, $case_sensitive {
+#                $string = '' if ! $string.defined;
+#                return $string ~~ m/ <$regex> / if $case_sensitive;
+#                return $string ~~ m:i/ <$regex> /; #:
+#            }
+#        );
+#        $dbh.sqlite_create_function( 'truncate', 2, -> $number, $places {
+#                return if ! $number.defined;
+#                return $number if ! $number ~~ Numeric; #look_like_a_number
+#                return sprintf "%.*f", $places, ( $number * 10 ** $places ) div 10 ** $places;
+#            }
+#        );
+#        $dbh.sqlite_create_function( 'bit_length', 1, -> $s {
+#                return $s.encode.elems;
+#            }
+#        );
+#        $dbh.sqlite_create_function( 'char_length', 1, 1, -> $s {
+#                return $s.chars;
+#            }
+#        );
+    }
     return $dbh;
 }
 
@@ -188,7 +210,7 @@ method tables_data ( $dbh, $schema ) {
         my $table = $href{$table_name};
         if ! $schema.defined && %duplicates{$table}++ {
             # the $schema is undefined if: SQLite + attached databases
-            # if the $schema is undefined, then in SQL code is always used the fully
+            # if the $schema is undefined, then in SQL code it is always used the fully
             # qualified table name and never the table name in the hash key
             if %duplicates{$table} == 2 {
                 my $tmp = $table_data{$table}:delete;

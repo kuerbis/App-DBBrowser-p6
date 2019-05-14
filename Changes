@@ -1,12 +1,18 @@
 Revision history for App-DBBrowser-p6
 
 
-0.0.3   2019-5-13
+0.0.4   2019-05-14
+        - Update HELP.
+        - require: always indirect name lookup.
+        - Update DB Plugin.
+        - Added author tests.
+
+0.0.3   2019-05-13
         - Disabled 'no precompilation'.
 
-0.0.2   2019-5-13
-        - ::("App::DBBrowser::Subqueries").new.
+0.0.2   2019-05-13
+        - Indirect name lookup for "App::DBBrowser::Subqueries".
         - no precompilation.
 
-0.0.1   2019-5-12
+0.0.1   2019-05-12
         - First relase on GitHub.

@@ -48,7 +48,7 @@ method parse_file_Text_CSV ( $sql, $file ) { # 0
     my $rows_of_cols = [];
     my %options = |$!o<csv>.keys.map: { $_ => _unescape $!o<csv>{$_} };
     require Text::CSV;
-    my $csv = Text::CSV.new( |%options );
+    my $csv = ::('Text::CSV').new( |%options );
     my $fh = $file.IO.open :r;
     #$csv.callbacks( error => \&ignore_2012 ); #
     $sql<insert_into_args> = $csv.getline_all( $fh );

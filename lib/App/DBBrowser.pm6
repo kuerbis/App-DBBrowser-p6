@@ -1,5 +1,5 @@
 use v6;
-unit class App::DBBrowser:ver<0.0.3>;
+unit class App::DBBrowser:ver<0.0.4>;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
@@ -17,7 +17,7 @@ use App::DBBrowser::DB;
 #use App::DBBrowser::Opt::DBSet;  # required
 use App::DBBrowser::Opt::Get;
 #use App::DBBrowser::Opt::Set;    # required
-#use App::DBBrowser::Subqueries;  # required ###
+#use App::DBBrowser::Subqueries;  # required
 use App::DBBrowser::Table;
 #use App::DBBrowser::Union;       # required
 
@@ -80,7 +80,7 @@ method !init {
         if $!i<help> {
             $!i<default><mouse> = $!o<table><mouse>;
             require App::DBBrowser::Opt::Set;
-            my $w_opt = App::DBBrowser::Opt::Set.new( :$!i, :$!o );
+            my $w_opt = ::('App::DBBrowser::Opt::Set').new( :$!i, :$!o );
             $!o = $w_opt.set_options;
         }
      #   CATCH { default { ###    
@@ -433,7 +433,7 @@ method run {
                         my $changed;
                         try {
                             require App::DBBrowser::Opt::DBSet;
-                            my $w_db_opt = App::DBBrowser::Opt::DBSet.new( $!i, $!o );
+                            my $w_db_opt = ::('App::DBBrowser::Opt::DBSet').new( $!i, $!o );
                             $changed = $w_db_opt.database_setting( $db );
                             CATCH { default {
                                 $ax.print_error_message( $_, 'Database settings' );
@@ -462,7 +462,7 @@ method run {
                     my ( $qt_table, $qt_columns );
                     if $table eq $join {
                         require App::DBBrowser::Join;
-                        my $new_j = App::DBBrowser::Join.new( :$!i, :$!o, :$!d );
+                        my $new_j = ::('App::DBBrowser::Join').new( :$!i, :$!o, :$!d );
                         $!i<special_table> = 'join';
                         try {
                             ( $qt_table, $qt_columns ) = $new_j.join_tables();
@@ -475,7 +475,7 @@ method run {
                     }
                     elsif $table eq $union {
                         require App::DBBrowser::Union;
-                        my $new_u = App::DBBrowser::Union.new( :$!i, :$!o, :$!d );
+                        my $new_u = ::('App::DBBrowser::Union').new( :$!i, :$!o, :$!d );
                         $!i<special_table> = 'union';
                         try {
                             ( $qt_table, $qt_columns ) = $new_u.union_tables();
@@ -608,7 +608,7 @@ method !create_drop_or_attach ( $table ) {
         my $choice = @choices[$idx-@pre.elems];
         if $choice ~~ / ^ '-' \s [ DROP || CREATE ] \s / {
             require App::DBBrowser::CreateTable;
-            my $ct = App::DBBrowser::CreateTable.new( :$!i, :$!o, :$!d );
+            my $ct = ::('App::DBBrowser::CreateTable').new( :$!i, :$!o, :$!d );
             if $choice eq $create_table {
                 try {
                     $ct.create_table();
@@ -649,7 +649,7 @@ method !create_drop_or_attach ( $table ) {
         }
         elsif $choice eq $attach_databases || $choice eq $detach_databases {
             require App::DBBrowser::AttachDB;
-            my $att = App::DBBrowser::AttachDB.new( :$!i, :$!o, :$!d );
+            my $att = ::('App::DBBrowser::AttachDB').new( :$!i, :$!o, :$!d );
             my $changed;
             if $choice eq $attach_databases {
                 try {
@@ -687,8 +687,7 @@ method !create_drop_or_attach ( $table ) {
 method !derived_table {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     require App::DBBrowser::Subqueries;
-    #use App::DBBrowser::Subqueries;
-    my $sq = ::("App::DBBrowser::Subqueries").new( :$!i, :$!o, :$!d ); # You cannot create an instance of this type (Subqueries)
+    my $sq = ::('App::DBBrowser::Subqueries').new( :$!i, :$!o, :$!d );
     $!i<stmt_types> = [ 'Select' ];
     my $tmp = { table => '()' };
     $ax.reset_sql( $tmp );

@@ -64,7 +64,7 @@ method join_tables {
         my $qt_master;
         if $master eq $from_subquery {
             require App::DBBrowser::Subqueries;
-            my $sq = App::DBBrowser::Subqueries.new( :$!i, :$!o, :$!d ); # works
+            my $sq = ::('App::DBBrowser::Subqueries').new( :$!i, :$!o, :$!d );
             $master = $sq.choose_subquery( $join );
             if ! $master.defined {
                 next MASTER;
@@ -189,7 +189,7 @@ method !_add_slave_with_join_condition ( $join, $tables, $join_type, $info ) {
         my $qt_slave;
         if $slave eq $from_subquery {
             require App::DBBrowser::Subqueries;
-            my $sq = App::DBBrowser::Subqueries.new( :$!i, :$!o, :$!d ); # works
+            my $sq = ::('App::DBBrowser::Subqueries').new( :$!i, :$!o, :$!d );
             $slave = $sq.choose_subquery( $join );
             if ! $slave.defined {
                 next SLAVE;

@@ -47,7 +47,7 @@ method extended_col ( $sql, $clause ) {
     my ( $ext_col, $alias_type );
     if $type eq $subquery {
         require App::DBBrowser::Subqueries;
-        my $sq = App::DBBrowser::Subqueries.new( :$!i, :$!o, :$!d ); # works
+        my $sq = ::('App::DBBrowser::Subqueries').new( :$!i, :$!o, :$!d );
         my $subq = $sq.choose_subquery( $sql );
         if ! $subq.defined {
             return;
@@ -57,7 +57,7 @@ method extended_col ( $sql, $clause ) {
     }
     elsif $type eq $function {
         require App::DBBrowser::Table::Functions;
-        my $fc = App::DBBrowser::Table::Functions.new( :$!i, :$!o, :$!d );
+        my $fc = ::('App::DBBrowser::Table::Functions').new( :$!i, :$!o, :$!d );
         my $func = $fc.col_function( $sql, $clause );
         if ! $func.defined {
             return;

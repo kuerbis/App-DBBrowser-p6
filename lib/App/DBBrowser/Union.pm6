@@ -8,6 +8,7 @@ use fatal;
 use Term::Choose;
 
 use App::DBBrowser::Auxil;
+#use App::DBBrowser::Subqueries; # required
 
 has $.i;
 has $.o;
@@ -78,7 +79,7 @@ method union_tables {
         }
         elsif $union_table eq $from_subquery {
             require App::DBBrowser::Subqueries;
-            my $sq = App::DBBrowser::Subqueries.new( :$!i, :$!o, :$!d ); # works
+            my $sq = ::('App::DBBrowser::Subqueries').new( :$!i, :$!o, :$!d );
             $union_table = $sq.choose_subquery( $union );
             if ! $union_table.defined {
                 next UNION_TABLE;

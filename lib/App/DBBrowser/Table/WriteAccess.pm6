@@ -276,7 +276,7 @@ method !_build_insert_stmt ( $sql ) {
         }
         my $insert_ok;
         require App::DBBrowser::GetContent;
-        my $gc = App::DBBrowser::GetContent.new( :$!i, :$!o, :$!d );
+        my $gc = ::('App::DBBrowser::GetContent').new( :$!i, :$!o, :$!d );
         if $custom eq %cu<insert_col> {
             $insert_ok = $gc.from_col_by_col( $sql );
         }

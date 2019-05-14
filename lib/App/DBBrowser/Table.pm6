@@ -10,6 +10,7 @@ use Term::Choose::Screen :clear;
 
 use App::DBBrowser::Auxil;
 use App::DBBrowser::Table::Substatements;
+#use App::DBBrowser::Table::WriteAccess; # required
 
 has $.i;
 has $.o;
@@ -111,7 +112,7 @@ method on_table ( $sql is rw ) { ##
         }
         elsif $custom eq $cu<hidden> {
             require App::DBBrowser::Table::WriteAccess;
-            my $write = App::DBBrowser::Table::WriteAccess.new( :$!i, :$!o, :$!d );
+            my $write = ::('App::DBBrowser::Table::WriteAccess').new( :$!i, :$!o, :$!d );
             $write.table_write_access( $sql );
             $!i<stmt_types> = [ 'Select' ];
             $old_idx = 1;

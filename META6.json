@@ -17,7 +17,7 @@
   "description" : "Browse SQLite/PostgreSQL databases and their tables interactively.",
   "license" : "Artistic-2.0",
   "name" : "App::DBBrowser",
-  "perl" : "6.c",
+  "perl" : "6.d",
   "provides" : {
     "App::DBBrowser" : "lib/App/DBBrowser.pm6",
     "App::DBBrowser::AttachDB" : "lib/App/DBBrowser/AttachDB.pm6",
@@ -50,5 +50,5 @@
   "test-depends" : [
     "Test"
   ],
-  "version" : "0.0.3"
+  "version" : "0.0.4"
 }

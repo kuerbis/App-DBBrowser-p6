@@ -219,16 +219,29 @@ method set_options ( $arg_groups = _groups(), $arg_options? ) { ###
             }
             my ( $no, $yes ) = ( 'NO', 'YES' );
             if $opt eq 'help' {
-                run( 'browse-db', '--man' );
-                #my $bin-code = $?DISTRIBUTION.content( 'bin/browse-db' ).open.slurp;
-                #my $pod = $bin-code.subst( / ^ .+ \n <?before '=begin pod'> /, '' );
+                my $tmp_file = $!i<app_dir>.IO.add: '.pod_' ~ $?DISTRIBUTION.meta<version> ~ '.pm6';
+                if ! $tmp_file.IO.e {
+                    for $!i<app_dir>.IO.dir( :test( / '.pod_' <[.0..9]>+ '.pm6' $ / ) ) { .unlink }
+                    $tmp_file.IO.spurt: $?DISTRIBUTION.content( 'bin/browse-db' ).open.slurp.subst( / ^ .+ \n <?before '=begin pod'> /, '' ).subst( / <?after '=end pod' \s* \n > .+ /, '' );
+                }
+                require Pod::Load <&load>;
+                require Pod::To::Text <&pod2text>;
+                my @lines;
+                for load( $tmp_file ).list -> $pod-block {
+                    for $pod-block.contents -> $pod-item {
+                        @lines.push: ' ', |pod2text( $pod-item ).split: "\n";
+                    }
+                }
+                @lines.unshift: '=' x 75;
+                $tc.pause( @lines, :2layout, :prompt(''), :0keep-header, :0table-expand, :empty('') );
             }
             elsif $opt eq 'path' {
                 my @path =
                     'INFO',
-                    #'version : ' ~ $main::VERSION,
+                    'version: ' ~ $?DISTRIBUTION.meta<version>,
                     '  bin  : ' ~ $*PROGRAM-NAME,
-                    'app-dir: ' ~ $!i<app_dir>;
+                    'app-dir: ' ~ $!i<app_dir>,
+                    '';
                 $tc.pause(
                     ( 'ENTER', ),
                     :prompt( @path.join: "\n" ), :1clear-screen

@@ -195,7 +195,7 @@ method from_copy_and_paste ( $sql ) {
         }
         elsif $filter_ok == -1 {
             require App::DBBrowser::Opt::Set;
-            my $w_opt = App::DBBrowser::Opt::Set.new( :$!i, :$!o );
+            my $w_opt = ::('App::DBBrowser::Opt::Set').new( :$!i, :$!o );
             my ( $groups, $options ) = _options_copy_and_paste();
             $!o = $w_opt.set_options( $groups, $options );
             $parse_mode_idx = $!o<insert><copy-parse-mode>;
