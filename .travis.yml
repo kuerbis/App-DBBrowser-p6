@@ -1,0 +1,18 @@
+#branches:
+#  except:
+#    - gh-pages
+language: perl6
+perl6:
+  - latest
+install:
+  - rakudobrew build zef
+  - zef install DBIish
+  - zef install File::Find
+  - zef install File::Temp
+  - zef install JSON::Fast
+  - zef install Term::Choose
+  - zef install Term::Choose::Util
+  - zef install Term::Form
+  - zef install Term::TablePrint
+  - zef install Text::CSV
+sudo: false

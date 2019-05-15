@@ -6,9 +6,8 @@ use fatal;
 #no precompilation;
 
 use Term::Choose;
-use Term::Choose::Screen :hide-cursor; ## Term::TablePrint :1loop
 use Term::Choose::Util :insert-sep;
-use Term::TablePrint :print-table;
+use Term::TablePrint;
 
 use App::DBBrowser::Auxil;
 use App::DBBrowser::DB;
@@ -143,11 +142,11 @@ method commit_sql ( $sql ) {
         my $prompt = $ax.print_sql( $sql );
         $prompt ~= "Affected records:";
         if @all_arrayref.elems > 1 {
-            print-table(
+            my $tt = Term::TablePrint.new( |$!o<table>, :1loop );
+            $tt.print-table(
                 @all_arrayref,
-                |$!o<table>, :$prompt, :1grid, :0max-rows, :1keep-header, :table-expand( $!o<G><info-expand> ) # :2grid
+                :$prompt, :1grid, :0max-rows, :1keep-header, :table-expand( $!o<G><info-expand> ) # :2grid
             );
-            hide-cursor(); ## loop 
         }
     }
     $ax.print_sql( $sql, $waiting );

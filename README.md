@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kuerbis/App-DBBrowser-p6.svg?branch=master)](https://travis-ci.org/kuerbis/App-DBBrowser-p6)
+
 NAME
 ====
 
@@ -25,3 +27,4 @@ Copyright (C) 2019 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 
+[?25h[0J

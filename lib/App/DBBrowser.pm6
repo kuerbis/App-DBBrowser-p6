@@ -1,5 +1,5 @@
 use v6;
-unit class App::DBBrowser:ver<0.0.4>;
+unit class App::DBBrowser:ver<0.0.5>;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
@@ -7,7 +7,7 @@ use fatal;
 
 use Term::Choose;
 use Term::Choose::Screen :clear, :hide-cursor, :show-cursor, :clr-to-bot;
-use Term::TablePrint :print-table;
+use Term::TablePrint;
 
 #use App::DBBrowser::AttachDB;    # required
 use App::DBBrowser::Auxil;
@@ -95,8 +95,8 @@ method !init {
 
 
 END {
-    #show-cursor(); 
-    #clr-to-bot();
+    show-cursor(); 
+    clr-to-bot();
 }
 
 
@@ -531,7 +531,7 @@ method run {
 
 method !browse_the_table ( $qt_table, $qt_columns ) {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
-    my $pt = Term::TablePrint.new();
+    my $tt = Term::TablePrint.new( :1loop );
     my $sql = {};
     $ax.reset_sql( $sql );
     $sql<table> = $qt_table;
@@ -553,9 +553,7 @@ method !browse_the_table ( $qt_table, $qt_columns ) {
         if ! $all_arrayref.defined {
             last PRINT_TABLE;
         }
-
-        print-table( $all_arrayref, |$!o<table> );
-        hide-cursor(); ## loop 
+        $tt.print-table( $all_arrayref, |$!o<table> );
         $!o<table><max-rows>:delete;
     }
 }

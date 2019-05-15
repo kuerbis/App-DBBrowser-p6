@@ -10,7 +10,7 @@ use fatal;
 use Term::Choose;
 use Term::Choose::Util :insert-sep;
 use Term::Form;
-use Term::TablePrint :print-table; # hide-cursor
+use Term::TablePrint;
 
 use App::DBBrowser::Auxil;
 use App::DBBrowser::DB;
@@ -85,9 +85,10 @@ method !_drop ( $sql, $type is copy ) {
     my $row_count = @all_arrayref.elems;
     @all_arrayref.unshift: $col_names;
     my $prompt = sprintf "DROP %s %s     (on last look at the %s)\n", $type.uc, $sql<table>, $type;
-    print-table(
+    my $tt = Term::TablePrint.new( |$!o<table>, :1loop );
+    $tt.print-table(
         @all_arrayref,
-        |$!o<table>, :$prompt, :1grid, :0max-rows, :1keep-header, :table-expand( $!o<G><info-expand> ) #:2grid
+        :$prompt, :1grid, :0max-rows, :1keep-header, :table-expand( $!o<G><info-expand> ) #:2grid
     );
     $prompt = sprintf 'DROP %s %s  (%s %s)', $type.uc, $sql<table>, insert-sep( $row_count, $!o<G><thsd-sep> ), $row_count == 1 ?? 'row' !! 'rows';
 # end try

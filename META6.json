@@ -11,7 +11,7 @@
     "Term::Choose:ver<1.5.4+>",
     "Term::Choose::Util:ver<1.2.6+>",
     "Term::Form:ver<1.2.2+>",
-    "Term::TablePrint:ver<1.4.4+>",
+    "Term::TablePrint:ver<1.4.5+>",
     "Text::CSV"
   ],
   "description" : "Browse SQLite/PostgreSQL databases and their tables interactively.",
@@ -50,5 +50,5 @@
   "test-depends" : [
     "Test"
   ],
-  "version" : "0.0.4"
+  "version" : "0.0.5"
 }

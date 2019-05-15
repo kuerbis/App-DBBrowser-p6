@@ -1,6 +1,10 @@
 Revision history for App-DBBrowser-p6
 
 
+0.0.5   2019-05-15
+        - Update Union.
+        - Enable END code.
+
 0.0.4   2019-05-14
         - Update HELP.
         - require: always indirect name lookup.

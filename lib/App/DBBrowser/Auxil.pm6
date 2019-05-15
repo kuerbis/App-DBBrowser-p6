@@ -354,14 +354,21 @@ method print_error_message ( $e, $info? is copy ) {
 }
 
 
-method column_names_and_types ( $tables ) {
+method column_names_and_types ( $tables ) { # 
     my ( $col_names, $col_types );
     for $tables.list -> $table {
-        my $sth = $!d<dbh>.prepare( "SELECT * FROM " ~ self.quote_table( $!d<tables_info>{$table} ) ~ " LIMIT 0" );
-        $sth.execute(); # if $!i<driver> ne 'SQLite'; ###
-        $col_names{$table} ||= $sth.column-names();
-        $col_types{$table} ||= $sth.column-types();
-        $sth.finish; #
+        try { # p5
+            my $sth = $!d<dbh>.prepare( "SELECT * FROM " ~ self.quote_table( $!d<tables_info>{$table} ) ~ " LIMIT 0" );
+            if $!i<driver> ne 'SQLite' {
+                $sth.execute();
+            }
+            $col_names{$table} ||= $sth.column-names();
+            $col_types{$table} ||= $sth.column-types();
+            $sth.finish();
+            CATCH { default {
+                self.print_error_message( $_, 'Col names and types' );
+            }}
+        }
     }
     return $col_names, $col_types;
 }

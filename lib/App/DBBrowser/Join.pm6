@@ -7,7 +7,7 @@ use fatal;
 
 use Term::Choose;
 use Term::Form;
-use Term::TablePrint :print-table; ##
+use Term::TablePrint;
 
 use App::DBBrowser::Auxil;
 #use App::DBBrowser::Subqueries; # required
@@ -257,7 +257,7 @@ method !_add_join_condition ( $join, $tables, $slave, $slave_alias ) {
 
     JOIN_PREDICATE: loop {
         my @pre = Any, $AND ?? $!i<_confirm> !! |();
-        my $fk_pre = '- ';
+        my $fk_pre = '  ';
 
         PRIMARY_KEY: loop {
             $ax.print_sql( $join );
@@ -343,7 +343,8 @@ method !_print_join_info {
         }
         $r++;
     }
-    print-table( $aref, :0keep-header, :3tab-width, :1grid ); # hide-cursor
+    my $tt = Term::TablePrint.new( :1loop );
+    $tt.print-table( $aref, :0keep-header, :3tab-width, :1grid ); # hide-cursor
 }
 
 

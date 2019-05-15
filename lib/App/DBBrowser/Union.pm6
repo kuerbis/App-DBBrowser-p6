@@ -177,10 +177,17 @@ method !_union_table_columns ( $union, $union_table, $qt_union_table ) {
 method !_union_all_tables ( $union ) {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $tc = Term::Choose.new( |$!i<default> );
-    my @choices  = Any, |$!d<user_tables>.map: { "- $_" };
+    my @tables_union_auto;
+    for $!d<user_tables>.list -> $table {
+        if  $!d<tables_info>{$table}[3] ne 'TABLE' {
+             next;
+        }
+        @tables_union_auto.push: $table;
+    }
+    my @choices = Any, |@tables_union_auto.map: { "- $_" };
 
     loop {
-        $union<subselect_data> = [ |$!d<user_tables>.map: { [ $_, [ '?' ] ] } ];
+        $union<subselect_data> = [ |@tables_union_auto.map: { [ $_, [ '?' ] ] } ];
         $ax.print_sql( $union );
         # Choose
         my $idx_tbl = $tc.choose(
@@ -201,7 +208,7 @@ method !_union_all_tables ( $union ) {
     }
     my $qt_used_cols = $union<subselect_data>[*-1][1];
     $union<subselect_data> = [];
-    for $!d<user_tables>.list -> $union_table {
+    for @tables_union_auto -> $union_table {
         $union<subselect_data>.push: [ $ax.quote_table( $!d<tables_info>{$union_table} ), $qt_used_cols ];
     }
     $ax.print_sql( $union );
