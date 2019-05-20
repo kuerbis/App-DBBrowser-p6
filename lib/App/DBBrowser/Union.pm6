@@ -16,9 +16,9 @@ has $.d;
 
 
 method union_tables {
-    $!i<stmt_types> = [ 'Union' ];
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $tc = Term::Choose.new( |$!i<default> );
+    $!i<stmt_types> = [ 'Union' ];
     my $tables = [ |$!d<user_tables>, |$!d<sys_tables> ];
     ( $!d<col_names>, $!d<col_types> ) = $ax.column_names_and_types( $tables );
     my $union = {
@@ -27,7 +27,7 @@ method union_tables {
         saved_cols     => []
     };
     my $unique_char = 'A';
-    my @bu;
+    my Array @bu;
 
     UNION_TABLE: while ( 1 ) {
         my $enough_tables = '  Enough TABLES';
@@ -48,21 +48,21 @@ method union_tables {
             }
         }
         my $prompt = 'Choose UNION table:';
-        my $choices  = [ |@pre, |@tmp_tables, |@post ];
+        my @choices  = |@pre, |@tmp_tables, |@post;
         $ax.print_sql( $union );
         # Choose
         my $idx_tbl = $tc.choose(
-            $choices,
+            @choices,
             |$!i<lyt_v>, :$prompt, :1index
         );
-        if ! $idx_tbl.defined || ! $choices[$idx_tbl].defined {
+        if ! $idx_tbl.defined || ! @choices[$idx_tbl].defined {
             if @bu.elems {
                 ( $union<used_tables>, $union<subselect_data>, $union<saved_cols> ) = |@bu.pop;
                 next UNION_TABLE;
             }
             return;
         }
-        my $union_table = $choices[$idx_tbl];
+        my $union_table = @choices[$idx_tbl];
         my $qt_union_table;
         if $union_table eq $enough_tables {
             if ! $union<subselect_data>.elems {
@@ -88,7 +88,9 @@ method union_tables {
             my $alias = $ax.alias( 'union', $union_table, $default_alias );
             $qt_union_table = $union_table ~ " AS " ~ $ax.quote_col_qualified( [ $alias ] );
             my $sth = $!d<dbh>.prepare( "SELECT * FROM " ~ $qt_union_table ~ " LIMIT 0" );
-            $sth.execute() if $!i<driver> ne 'SQLite';
+            if $!i<driver> ne 'SQLite' {
+                $sth.execute();
+            }
             $!d<col_names>{$union_table} = $sth.column-names();
         }
         else {
@@ -121,7 +123,7 @@ method !_union_table_columns ( $union, $union_table, $qt_union_table ) {
     my $tc = Term::Choose.new( |$!i<default> );
     my ( $privious_cols, $void ) = ( q['^'], q[' '] );
     my $next_idx = $union<subselect_data>.elems;
-    my $table_cols = [];
+    my @table_cols;
     my @bu_cols;
 
     loop {
@@ -134,14 +136,13 @@ method !_union_table_columns ( $union, $union_table, $qt_union_table ) {
         );
         if ! @chosen[0].defined {
             if @bu_cols {
-                $table_cols = @bu_cols.pop;
-                $union<subselect_data>[$next_idx] = [ $qt_union_table, $ax.quote_simple_many( $table_cols ) ];
+                @table_cols = @bu_cols.pop;
+                $union<subselect_data>[$next_idx] = [ $qt_union_table, $ax.quote_simple_many( @table_cols ) ];
                 next;
             }
             else {
-                #$#{$union<subselect_data>} = $next_idx - 1;   # ###
                 if $union<subselect_data>.elems {
-                    $union<subselect_data>.pop;                    # ###
+                    $union<subselect_data>.pop;
                 }
                 return;
             }
@@ -156,19 +157,19 @@ method !_union_table_columns ( $union, $union_table, $qt_union_table ) {
         elsif @chosen[0] eq $!i<ok> {
             @chosen.shift;
             if @chosen.elems {
-                $table_cols.push: @chosen;
+                @table_cols.push: @chosen;
             }
-            if ! $table_cols.elems {
-                $table_cols = [ |$!d<col_names>{$union_table} ];
+            if ! @table_cols.elems {
+                @table_cols = |$!d<col_names>{$union_table};
             }
-            $union<subselect_data>[$next_idx] = [ $qt_union_table, $ax.quote_simple_many( $table_cols ) ];
-            $union<saved_cols> = $table_cols;
+            $union<subselect_data>[$next_idx] = [ $qt_union_table, $ax.quote_simple_many( @table_cols ) ];
+            $union<saved_cols> = @table_cols;
             return 1;
         }
         else {
-            @bu_cols.push: $table_cols;
-            $table_cols.push: @chosen;
-            $union<subselect_data>[$next_idx] = [ $qt_union_table, $ax.quote_simple_many( $table_cols ) ];
+            @bu_cols.push: @table_cols;
+            @table_cols.push: @chosen;
+            $union<subselect_data>[$next_idx] = [ $qt_union_table, $ax.quote_simple_many( @table_cols ) ];
         }
     }
 }
@@ -198,8 +199,7 @@ method !_union_all_tables ( $union ) {
             $union<subselect_data> = [];
             return;
         }
-        my $union_table = @choices[$idx_tbl]; ##
-        $union_table ~~ s/ ^ '-' \s //;         ##
+        my $union_table = @choices[$idx_tbl].subst( / ^ '-' \s /, '' );
         my $qt_union_table = $ax.quote_table( $!d<tables_info>{$union_table} );
         my $ok = self!_union_table_columns( $union, $union_table, $qt_union_table );
         if $ok {

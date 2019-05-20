@@ -8,10 +8,10 @@
     "File::Find",
     "File::Temp",
     "JSON::Fast",
-    "Term::Choose:ver<1.5.4+>",
-    "Term::Choose::Util:ver<1.2.6+>",
-    "Term::Form:ver<1.2.2+>",
-    "Term::TablePrint:ver<1.4.5+>",
+    "Term::Choose:ver<1.5.6+>",
+    "Term::Choose::Util:ver<1.2.7+>",
+    "Term::Form:ver<1.2.3+>",
+    "Term::TablePrint:ver<1.4.7+>",
     "Text::CSV"
   ],
   "description" : "Browse SQLite/PostgreSQL databases and their tables interactively.",
@@ -50,5 +50,5 @@
   "test-depends" : [
     "Test"
   ],
-  "version" : "0.0.5"
+  "version" : "0.0.6"
 }

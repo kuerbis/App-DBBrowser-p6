@@ -1,5 +1,5 @@
 use v6;
-unit class App::DBBrowser::Subqueries;
+unit class App::DBBrowser::Subqueries; # p5
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
@@ -17,53 +17,52 @@ has $.o;
 has $.d;
 
 
-method !_tmp_history ( @saved_history ) {
+method !_tmp_history ( Array $history_HD ) {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $db = $!d<db>;
-    my $keep = [];
-    my @tmp_main_stmt;
+    my Array @keep;
+    my Str @main_queries;
     if $!i<history>{$db}<main> ~~ List { ##
         for $!i<history>{$db}<main>.list -> ( $stmt, $args ) {
             my $filled_stmt = $ax.stmt_placeholder_to_value( $stmt, $args, 1 );
             if $filled_stmt ~~ / ^ <-[\(]>+ FROM \s* \( \s* ( <-[)(]>+ ) \s* \) <-[\)]>* $ / { # Union, Join
-                $filled_stmt = $0;
+                $filled_stmt = $0.Str;
             }
-            if $filled_stmt eq @tmp_main_stmt.any {
+            if $filled_stmt eq @main_queries.any {
                 next;
             }
-            if $keep.elems == 7 {
-                $!i<history>{$db}<main> = $keep;
+            if @keep.elems == 7 {
+                $!i<history>{$db}<main> = @keep;
                 last;
             }
-            $keep.push: [ $stmt, $args ];
-            @tmp_main_stmt.push: $filled_stmt;
+            @keep.push: [ $stmt, $args ];
+            @main_queries.push: $filled_stmt;
         }
     }
-    my @tmp_substmts;
+    my Str @sub_queries;
     if $!i<history>{$db}<substmt> ~~ List { ##
-        @tmp_substmts = |$!i<history>{$db}<substmt>.unique;
-        while @tmp_substmts.elems > 9 {
-            @tmp_substmts.pop;
+        @sub_queries = |$!i<history>{$db}<substmt>.unique;
+        while @sub_queries.elems > 9 {
+            @sub_queries.pop;
         }
     }
-    my @tmp_history;
-    for ( @tmp_substmts, @tmp_main_stmt ).flat.unique -> $stmt {
-        if $stmt eq @saved_history.map({ .[1] }).any {
+    my Array $history_RAM = [];
+    for ( @sub_queries, @main_queries ).flat.unique -> $stmt {
+        if $stmt eq $history_HD.map({ .[1] }).any {
             next;
         }
-        @tmp_history.push: [ $stmt, $stmt ];
+        $history_RAM.push: [ $stmt, $stmt ];
     }
-    return @tmp_history;
+    return $history_RAM;
 }
 
 
 method !_get_history {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
-    my $h_ref = $ax.read_json( $!i<f_subqueries> );
-    my @saved_history := $h_ref{ $!i<driver> }{ $!d<db> } // [];
-    my @tmp_history := self!_tmp_history( @saved_history );
-    my @lyt_history = |@saved_history, |@tmp_history; ##
-    return @lyt_history;
+    my $h_ref = $ax.read_json: $!i<f_subqueries>;
+    my Array $history_HD = $h_ref{ $!i<driver> }{ $!d<db> } // [];
+    my Array $history_RAM = self!_tmp_history( $history_HD );
+    return [ |$history_HD, |$history_RAM ];
 }
 
 
@@ -71,14 +70,14 @@ method choose_subquery ( $sql ) {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $tc = Term::Choose.new( |$!i<default> );
     my $tf = Term::Form.new( :1loop );
-    my @lyt_history := self!_get_history();
+    my Array $history_comb = self!_get_history();
     my $edit_sq_file = 'Choose SQ:';
     my $readline     = '  Read-Line';
     my $old_idx = 1;
 
     SUBQUERY: loop {
         my @pre = $edit_sq_file, Any, $readline;
-        my @choices = |@pre, |@lyt_history.map: { '- ' ~ $_[1] };
+        my @choices = |@pre, |$history_comb.map: { '- ' ~ $_[1] };
         # Choose
         my $idx = $tc.choose(
             @choices,
@@ -95,31 +94,34 @@ method choose_subquery ( $sql ) {
             $old_idx = $idx;
         }
         if @choices[$idx] eq $edit_sq_file {
-            if self!_edit_sq_file() {
-                @lyt_history := self!_get_history();
-                @choices = |@pre, |@lyt_history.map: { '- ' ~ .[1] };
+            if self!_subqueries_file() {
+                $history_comb = self!_get_history();
+                @choices = |@pre, |$history_comb.map: { '- ' ~ .[1] };
             }
             $ax.print_sql( $sql );
             next SUBQUERY;
         }
         my ( $prompt, $default );
+        #my ( $info, $default );
         if @choices[$idx] eq $readline {
             $prompt = 'Enter SQ: ';
+            #$info = 'Enter SQ: ';
             $default = '';
         }
         else {
             $prompt = 'Edit SQ: ';
+            #$info = 'Edit SQ: ';
             $idx -= @pre.elems;
-            $default = @lyt_history[$idx][0];
+            $default = $history_comb[$idx][0];
         }
         # Readline
         my $stmt = $tf.readline( $prompt, :$default, :1show-context );
+        #my $stmt = $tf.readline( '', :$info, :$default, :1show-context ); # rl
         if ! $stmt.defined || ! $stmt.chars {
             $ax.print_sql( $sql );
             next SUBQUERY;
         }
-        my $db = $!d<db>;
-        $!i<history>{$db}<substmt>.unshift: $stmt;
+        $!i<history>{$!d<db>}<substmt>.unshift: $stmt;
         if $stmt !~~ / ^ \s* \( <-[)(]>+ \) \s* $ / {
             $stmt = "(" ~ $stmt ~ ")";
         }
@@ -128,7 +130,7 @@ method choose_subquery ( $sql ) {
 }
 
 
-method !_edit_sq_file {
+method !_subqueries_file {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $tc = Term::Choose.new( |$!i<default> );
     my $driver = $!i<driver>;
@@ -138,15 +140,15 @@ method !_edit_sq_file {
     my $any_change = 0;
 
     loop {
-        my $top_lines = [ sprintf( 'Stored Subqueries:' ) ];
-        my $h_ref = $ax.read_json( $!i<f_subqueries> );
-        my @saved_history := $h_ref{$driver}{$db} // [];
-        my @tmp_info = (
-            |$top_lines,
-            |@saved_history.map({ line-fold( $_[*-1], get-term-size().[0], '  ', '    ' ) }),
+        my Str @top_lines = 'Stored Subqueries:';
+        my $h_ref = $ax.read_json: $!i<f_subqueries>;
+        my Array $history_HD = $h_ref{$driver}{$db} // [];
+        my Str @tmp_info = (
+            |@top_lines,
+            |$history_HD.map({ |line-fold( $_[1], get-term-size().[0], '  ', '    ' ) }),
             ' '
         );
-        my $info = @tmp_info.join: "\n";
+        my Str $info = @tmp_info.join: "\n";
         # Choose
         my $choice = $tc.choose(
             [ |@pre, $add, $edit, $remove ],
@@ -157,49 +159,49 @@ method !_edit_sq_file {
             return $any_change;
         }
         elsif $choice eq $add {
-            $changed = self!_add_subqueries( @saved_history, $top_lines );
+            $changed = self!_add_subqueries( $history_HD, @top_lines );
         }
         elsif $choice eq $edit {
-            $changed = self!_edit_subqueries( @saved_history, $top_lines );
+            $changed = self!_edit_subqueries( $history_HD, @top_lines );
         }
         elsif $choice eq $remove {
-            $changed = self!_remove_subqueries( @saved_history, $top_lines );
+            $changed = self!_remove_subqueries( $history_HD, @top_lines );
         }
         if $changed {
-            if @saved_history.elems {
-                $h_ref{$driver}{$db}<substmt> = @saved_history;
+            if $history_HD.elems {
+                $h_ref{$driver}{$db} = $history_HD;
             }
             else {
-                $h_ref{$driver}{$db}<substmt>:delete;
+                $h_ref{$driver}{$db}:delete;
             }
-            $ax.write_json( $!i<f_subqueries>, $h_ref );
+            $ax.write_json: $!i<f_subqueries>, $h_ref;
             $any_change++;
         }
     }
 }
 
 
-method !_add_subqueries ( @saved_history, $top_lines ) {
+method !_add_subqueries ( Array $history_HD, Str @top_lines ) {
     my $tc = Term::Choose.new( |$!i<default> );
     my $tf = Term::Form.new( :1loop );
-    my @tmp_history := self!_tmp_history( @saved_history );
-    my @used;
+    my Array $history_RAM = self!_tmp_history( $history_HD );
+    my Array $saved_new = [];
+    my Array $used = [];
+    my Array @bu;
     my $readline = '  Read-Line';
     my @pre = Any, $!i<_confirm>, $readline;
-    my @bu;
-    my @tmp_new;
 
     loop {
-        my @tmp_info = (
-            |$top_lines,
-            |@saved_history.map({ line-fold( $_[1], get-term-size().[0], '  ', '    ' ) }),
+        my Str @tmp_info = (
+            |@top_lines,
+            |$history_HD.map({ |line-fold( $_[1], get-term-size().[0], '  ', '    ' ) }),
         );
-        if @tmp_new.elems {
-            @tmp_info.push: |@tmp_new.map({ line-fold( $_[1], get-term-size().[0], '| ', '    ' ) });
+        if $saved_new.elems {
+            @tmp_info.push: |$saved_new.map: { |line-fold( $_[1], get-term-size().[0], '| ', '    ' ) };
         }
         @tmp_info.push: ' ';
-        my $info = @tmp_info.join: "\n";
-        my @choices = |@pre, |@tmp_history.map: {  '- ' ~ $_[1] };
+        my Str $info = @tmp_info.join: "\n";
+        my @choices = |@pre, |$history_RAM.map: {  '- ' ~ $_[1] };
         # Choose
         my $idx = $tc.choose(
             @choices,
@@ -207,13 +209,13 @@ method !_add_subqueries ( @saved_history, $top_lines ) {
         );
         if ! $idx {
             if @bu.elems {
-                ( @tmp_new, @tmp_history, @used ) = |@bu.pop;
+                ( $saved_new, $history_RAM, $used ) = |@bu.pop;
                 next;
             }
             return;
         }
         elsif @choices[$idx] eq $!i<_confirm> {
-            @saved_history.push: |@tmp_new;
+            $history_HD.push: |$saved_new;
             return 1;
         }
         elsif @choices[$idx] eq $readline {
@@ -225,50 +227,50 @@ method !_add_subqueries ( @saved_history, $top_lines ) {
             if $stmt ~~ / ^ \s* \( ( <-[)(]>+ ) \) \s* $ / {
                 $stmt = $0;
             }
-            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-size().[0], '', ' ' x 'Stmt: '.chars );
+            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-size().[0], '', ' ' x 'Stmt: '.chars ).join: "\n";
             # Readline
             my $name = $tf.readline( 'Name: ', :info( $info ~ $folded_stmt ), :1show-context );
             if ! $name.defined  {
                 next;
             }
-            @bu.push: [ [ |@tmp_new ], [ |@tmp_history ], [ |@used ] ];
-            @tmp_new.push: [ $stmt, $name ];
+            @bu.push: [ [ |$saved_new ], [ |$history_RAM ], [ |$used ] ];
+            $saved_new.push: [ $stmt, $name ];
         }
         else {
-            @bu.push: [ [ |@tmp_new ], [ |@tmp_history ], [ |@used ] ];
-            @used.push: |@tmp_history.splice: $idx - @pre.elems, 1;
-            my $stmt = @used[*-1][0];
-            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-size().[0], '', ' ' x 'Stmt: '.chars );
+            @bu.push: [ [ |$saved_new ], [ |$history_RAM ], [ |$used ] ];
+            $used.push: |$history_RAM.splice: $idx - @pre.elems, 1;
+            my $stmt = $used[*-1][0];
+            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-size().[0], '', ' ' x 'Stmt: '.chars ).join: "\n";
             # Readline
             my $name = $tf.readline( 'Name: ', :info( $info ~ $folded_stmt ), :1show-context );
             if ! $name.defined  {
-                ( @tmp_new, @tmp_history, @used ) = |@bu.pop;
+                ( $saved_new, $history_RAM, $used ) = |@bu.pop;
                 next;
             }
-            @tmp_new.push: [ $stmt, $name ];
+            $saved_new.push: [ $stmt, $name ];
         }
     }
 }
 
 
-method !_edit_subqueries ( @saved_history, $top_lines ) {
+method !_edit_subqueries ( Array $history_HD, Str @top_lines ) {
     my $tc = Term::Choose.new( |$!i<default> );
     my $tf = Term::Form.new( :1loop );
-    if ! @saved_history.elems {
+    if ! $history_HD.elems {
         return;
     }
-    my @indexes;
+    my Array @unchanged_history_HD = $history_HD;
+    my Int @indexes;
+    my Array @bu;
     my @pre = Any, $!i<_confirm>;
-    my @bu;
     my $old_idx = 0;
-    my @unchanged_saved_history = @saved_history;
 
     STMT: loop {
-        my $info = $top_lines.join: "\n";
-        my @available;
-        for 0 .. @saved_history.end -> $i { ##
+        my $info = @top_lines.join: "\n";
+        my Str @available;
+        for 0 .. $history_HD.end -> $i { ##
             my $pre = $i == @indexes.any ?? '| ' !! '- ';
-            @available.push: $pre ~ @saved_history[$i][1];
+            @available.push: $pre ~ $history_HD[$i][1];
         }
         my @choices = |@pre, |@available;
         # Choose
@@ -278,7 +280,7 @@ method !_edit_subqueries ( @saved_history, $top_lines ) {
         );
         if ! $idx {
             if @bu.elems {
-                ( @saved_history, @indexes ) = |@bu.pop;
+                ( $history_HD, @indexes ) = |@bu.pop;
                 next STMT;
             }
             return;
@@ -295,9 +297,9 @@ method !_edit_subqueries ( @saved_history, $top_lines ) {
         }
         else {
             $idx -= @pre.elems;
-            my @tmp_info = |$top_lines, 'Edit:', '  BACK', '  CONFIRM';
-            for 0 .. @saved_history.end -> $i {  ##
-                my $stmt = @saved_history.[$i][1];
+            my Str @tmp_info = |@top_lines, 'Edit:', '  BACK', '  CONFIRM';
+            for 0 .. $history_HD.end -> $i {  ##
+                my $stmt = $history_HD.[$i][1];
                 my $pre = '  ';
                 if $i == $idx {
                     $pre = '> ';
@@ -305,29 +307,29 @@ method !_edit_subqueries ( @saved_history, $top_lines ) {
                 elsif $i == @indexes.any {
                     $pre = '| ';
                 }
-                my $folded_stmt = line-fold( $stmt, get-term-size().[0], $pre,  $pre ~ ( ' ' x 2 ) );
+                my $folded_stmt = line-fold( $stmt, get-term-size().[0], $pre,  $pre ~ ( ' ' x 2 ) ).join: "\n";
                 @tmp_info.push: $folded_stmt;
             }
             @tmp_info.push: ' ';
             my $info = @tmp_info.join: "\n";
             # Readline
-            my $stmt = $tf.readline( 'Stmt: ', :default( @saved_history[$idx][0] ), :$info, :1show-context, :1clear-screen );
+            my $stmt = $tf.readline( 'Stmt: ', :default( $history_HD[$idx][0] ), :$info, :1show-context, :1clear-screen );
             if ! $stmt.defined || ! $stmt.chars {
                 next STMT;
             }
-            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-size().[0], '', ' ' x 'Stmt: '.chars );
+            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-size().[0], '', ' ' x 'Stmt: '.chars ).join: "\n";
             my $default;
-            if @saved_history[$idx][0] ne @saved_history[$idx][1] {
-                $default = @saved_history[$idx][1];
+            if $history_HD[$idx][0] ne $history_HD[$idx][1] {
+                $default = $history_HD[$idx][1];
             }
             # Readline
             my $name = $tf.readline( 'Name: ', :$default, :info( $info ~ $folded_stmt ), :1show-context );
             if ! $name.defined  {
                 next STMT;
             }
-            if $stmt ne @saved_history[$idx][0] || $name ne @saved_history[$idx][1] {
-                @bu.push: [ [ |@saved_history ], [ |@indexes ] ];
-                @saved_history[$idx] = [ $stmt, $name.chars ?? $name !! $stmt ];
+            if $stmt ne $history_HD[$idx][0] || $name ne $history_HD[$idx][1] {
+                @bu.push: [ [ |$history_HD ], [ |@indexes ] ];
+                $history_HD[$idx] = [ $stmt, $name.chars ?? $name !! $stmt ];
                 @indexes.push: $idx;
             }
         }
@@ -335,31 +337,31 @@ method !_edit_subqueries ( @saved_history, $top_lines ) {
 }
 
 
-method !_remove_subqueries ( @saved_history, $top_lines ) {
+method !_remove_subqueries ( Array $history_HD, Str @top_lines ) {
     my $tc = Term::Choose.new( |$!i<default> );
-    if ! @saved_history.elems {
+    if ! $history_HD.elems {
         return;
     }
-    my @backup;
-    my @remove;
+    my Array @bu;
+    my Str @remove;
 
     loop {
-        my @tmp_info = (
-            |@$top_lines,
+        my Str @tmp_info = (
+            |@top_lines,
             'Remove:',
-            |@remove.map({ line-fold( $_, get-term-size().[0], '  ', '    ' ) }),
+            |@remove.map({ |line-fold( $_, get-term-size().[0], '  ', '    ' ) }),
             ' '
         );
         my $info = @tmp_info.join: "\n";
         my @pre = Any, $!i<_confirm>;
-        my @choices = |@pre, |@saved_history.map: { '- ' ~ $_[1] };
+        my @choices = |@pre, |$history_HD.map: { '- ' ~ $_[1] };
         my $idx = $tc.choose(
             @choices,
-            :prompt( 'Choose:' ), :$info, :3layout, :1index, :undef( '  BACK' )
+            :prompt( 'Choose:' ), :$info, :2layout, :1index, :undef( '  BACK' )
         );
         if ! $idx {
-            if @backup.elems {
-                @saved_history = @backup.pop;
+            if @bu.elems {
+                $history_HD = |@bu.pop;
                 @remove.pop;
                 next;
             }
@@ -371,9 +373,9 @@ method !_remove_subqueries ( @saved_history, $top_lines ) {
             }
             return 1;
         }
-        @backup.push: [ |@saved_history ];
-        my $ref = @saved_history.splice; $idx - @pre.elems, 1;
-        @remove.push: $ref[1];
+        @bu.push: [ |$history_HD ];
+        my ( $stmt, $name ) = $history_HD.splice( $idx - @pre.elems, 1 )[0]; # [0]
+        @remove.push: $name;
     }
 }
 

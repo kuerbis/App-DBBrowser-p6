@@ -1,12 +1,12 @@
 use v6;
-unit class App::DBBrowser:ver<0.0.5>;
+unit class App::DBBrowser:ver<0.0.6>;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
 #no precompilation;
 
 use Term::Choose;
-use Term::Choose::Screen :clear, :hide-cursor, :show-cursor, :clr-to-bot;
+use Term::Choose::Screen :clear, :hide-cursor, :show-cursor, :clr-lines-to-bot;
 use Term::TablePrint;
 
 #use App::DBBrowser::AttachDB;    # required
@@ -57,7 +57,7 @@ method !init {
         say "'Could not find the home directory!";
         say "'browse-db' requires a home directory.";
         show-cursor();
-        clr-to-bot();
+        clr-lines-to-bot();
         exit;
     }
     $!i<app_dir> = $!i<home_dir>.add( '.config' ).add( 'browse-db6' );
@@ -95,8 +95,8 @@ method !init {
 
 
 END {
-    show-cursor(); 
-    clr-to-bot();
+    show-cursor();
+    clr-lines-to-bot();
 }
 
 
@@ -105,8 +105,7 @@ method run {
         $!i<f_tmp_copy_paste>.IO.unlink if $!i<f_tmp_copy_paste>.defined && $!i<f_tmp_copy_paste>.IO.e;
         %*ENV<TC_RESET_AUTO_UP>:delete  if %*ENV<TC_RESET_AUTO_UP>:exists;
         show-cursor();
-        clr-to-bot();
-        #"^C".note;
+        clr-lines-to-bot();
         "\n".note;
         exit 1;
     };
@@ -263,8 +262,8 @@ method run {
                 my $h_ref = $ax.read_json( $!i<f_attached_db> );
                 my $attached_db = $h_ref{$db} // [];
                 if $attached_db.elems {
-                    for $attached_db.list -> $ref {
-                        my $stmt = sprintf "ATTACH DATABASE %s AS %s", $ax.quote-identifier( $ref[0] ), $ax.quote( $ref[1] );
+                    for $attached_db.list -> ( $db, $name ) {
+                        my $stmt = sprintf "ATTACH DATABASE %s AS %s", $ax.quote-identifier( $db ), $ax.quote( $name );
                         $dbh.do( $stmt );
                     }
                     $!i<db_attached> = 1;
@@ -525,7 +524,7 @@ method run {
     # END of App
     %*ENV<TC_RESET_AUTO_UP>:delete;
     show-cursor();
-    clr-to-bot();
+    clr-lines-to-bot();
 }
 
 
@@ -717,10 +716,6 @@ method !derived_table {
 =head1 NAME
 
 App::DBBrowser - Browse SQLite/PostgreSQL databases and their tables interactively.
-
-=head1 VERSION
-
-Version 0.001
 
 =head1 DESCRIPTION
 

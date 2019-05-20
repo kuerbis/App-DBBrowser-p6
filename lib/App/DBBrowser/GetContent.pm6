@@ -55,10 +55,10 @@ method from_col_by_col ( $sql ) {
         }
         $col_names = [ |( 1 .. $col_count ).map: { 'c' ~ $_ } ];
         my $col_number = 0;
-        my $fields = [ |$col_names.map: { [ ++$col_number, $_.defined ?? "$_" !! '' ] } ]; ##
+        my Array @fields = |$col_names.map: { [ ++$col_number, $_.defined ?? "$_" !! '' ] }; ##
         # Fill_form
         my $form = $tf.fill-form(
-            $fields,
+            @fields,
             :prompt( 'Col names:' ), :2auto-up, :confirm( '  CONFIRM' ), :back( '  BACK   ' )
         );
         if ! $form {
@@ -79,7 +79,7 @@ method from_col_by_col ( $sql ) {
         }
         my $default = 0;
         if $sql<insert_into_args>.elems {
-            $default = ( $sql<insert_into_args>[*-1].grep( ! *.chars).all ) ?? 3 !! 2;
+            $default = $sql<insert_into_args>[*-1].grep( *.chars ) ?? 2 !! 3;
         }
 
         ASK: loop {
@@ -276,7 +276,8 @@ method from_file ( $sql ) {
                 $old_idx = $idx;
             }
             if @choices[$idx] eq $hidden {
-                my $w_opt = App::DBBrowser::Opt.new( :$!i, :$!o );
+                require App::DBBrowser::Opt::Set;
+                my $w_opt = ::('App::DBBrowser::Opt::Set').new( :$!i, :$!o );
                 my ( $groups, $options ) = _options_file( 1 );
                 $!o = $w_opt.set_options( $groups, $options );
                 $parse_mode_idx = $!o<insert><file-parse-mode>;
@@ -320,7 +321,8 @@ method from_file ( $sql ) {
                     next FILE;
                 }
                 elsif $filter_ok == -1 {
-                    my $w_opt = App::DBBrowser::Opt.new( :$!i, :$!o );
+                    require App::DBBrowser::Opt::Set;
+                    my $w_opt = ::('App::DBBrowser::Opt::Set').new( :$!i, :$!o );
                     my ( $groups, $options ) = _options_file( 0 );
                     $!o = $w_opt.set_options( $groups, $options );
                     $parse_mode_idx = $!o<insert><file-parse-mode>;

@@ -1,9 +1,14 @@
 Revision history for App-DBBrowser-p6
 
 
+0.0.6   2019-05-20
+        - Bugfixes.
+        - Code refactoring.
+
 0.0.5   2019-05-15
         - Update Union.
         - Enable END code.
+        - Add travis.yml file.
 
 0.0.4   2019-05-14
         - Update HELP.

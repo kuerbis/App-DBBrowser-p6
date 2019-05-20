@@ -9,7 +9,7 @@ use fatal;
 #use Pod::load          # required
 
 use Term::Choose;
-use Term::Choose::Screen :clear, :clr-to-bot, :show-cursor;
+use Term::Choose::Screen :clear, :clr-lines-to-bot, :show-cursor;
 use Term::Choose::Util :insert-sep;
 use Term::Form;
 
@@ -142,7 +142,7 @@ method set_options ( $arg_groups = _groups(), $arg_options? ) { ###
                     self!write_config_files();
                     $!write_config = Any; #:delete;
                 }
-                clr-to-bot();
+                clr-lines-to-bot();
                 show-cursor();
                 exit();
             }

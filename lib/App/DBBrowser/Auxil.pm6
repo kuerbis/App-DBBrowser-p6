@@ -17,19 +17,7 @@ has $.i;
 has $.o;
 has $.d;
 
-
-method installed_modules { # ### 
-    my @curs       = $*REPO.repo-chain.grep( *.?prefix.?e );
-    my @repo-dirs  = @curs>>.prefix;
-    my @dist-dirs  = |@repo-dirs.map( *.child( 'dist' ) ).grep( *.e );
-    my @dist-files = |@dist-dirs.map( *.IO.dir.grep( *.IO.f ).Slip );
-    my $dists = gather for @dist-files -> $file {
-        if try { Distribution.new( |%( from-json( $file.IO.slurp ) ) ) } -> $dist {
-            my $cur = @curs.first: { .prefix eq $file.parent.parent }
-            take $_ for $dist.hash<provides>.keys;
-        }
-    }
-}
+my $list_sep = ', ';
 
 
 method get_stmt ( $sql, $stmt_type, $used_for ) {
@@ -43,7 +31,7 @@ method get_stmt ( $sql, $stmt_type, $used_for ) {
         @tmp = "DROP VIEW $table";
     }
     elsif $stmt_type eq 'Create_table' {
-        @tmp = sprintf "CREATE TABLE $table (%s)", $sql<create_table_cols>.map({ $_ // '' }).join: ', '; #
+        @tmp = sprintf "CREATE TABLE $table (%s)", $sql<create_table_cols>.map({ $_ // '' }).join: $list_sep;
     }
     elsif $stmt_type eq 'Create_view' {
         @tmp = sprintf "CREATE VIEW $table AS " ~ $sql<view_select_stmt>;
@@ -68,9 +56,9 @@ method get_stmt ( $sql, $stmt_type, $used_for ) {
         @tmp.push: $in ~ $sql<where_stmt> if $sql<where_stmt>;
     }
     elsif $stmt_type eq 'Insert' {
-        @tmp = sprintf "INSERT INTO $table (%s)", $sql<insert_into_cols>.join: ', ';
+        @tmp = sprintf "INSERT INTO $table (%s)", $sql<insert_into_cols>.join: $list_sep;
         if $used_for eq 'prepare' {
-            @tmp.push: sprintf " VALUES(%s)", ( ( '?' ) xx $sql<insert_into_cols>.elems ).join: ', ';
+            @tmp.push: sprintf " VALUES(%s)", ( ( '?' ) xx $sql<insert_into_cols>.elems ).join: $list_sep;
         }
         else {
             @tmp.push: "  VALUES(";
@@ -86,10 +74,10 @@ method get_stmt ( $sql, $stmt_type, $used_for ) {
     elsif $stmt_type eq 'Union' {
         @tmp = $used_for eq 'print' ?? "SELECT * FROM (" !! "(";
         my $count = 0;
-        for $sql<subselect_data>.list -> $ref {
+        for $sql<subselect_data>.list -> @ref {
             ++$count;
-            my $str = $in x 2 ~ "SELECT " ~ $ref[1].join: ', ';
-            $str ~= " FROM " ~ $ref[0];
+            my $str = $in x 2 ~ "SELECT " ~ @ref[1].join: $list_sep;
+            $str ~= " FROM " ~ @ref[0];
             if $count < $sql<subselect_data>.elems {
                 $str ~= " UNION ALL ";
             }
@@ -118,24 +106,23 @@ method insert_into_args_info_format ( $sql, $indent ) {
     }
     $begin--;
     $end--;
-    my $list_sep = ', ';
     my $last_i = $sql<insert_into_args>.end;
     my $tmp = [];
     if $sql<insert_into_args>.elems > $max + 3 {
         for $sql<insert_into_args>[^$begin] -> $row { # ^
-            $tmp.push: $indent ~ $row.map( { $_ // '' } ).join: $list_sep;
+            $tmp.push: $indent ~ $row.map({ $_ // '' }).join: $list_sep;
         }
         $tmp.push: $indent ~ '...';
         $tmp.push: $indent ~ '...';
         for $sql<insert_into_args>[ $last_i - $end .. $last_i ] -> $row {
-            $tmp.push: $indent ~ $row.map( { $_ // '' } ).join: $list_sep;
+            $tmp.push: $indent ~ $row.map({ $_ // '' }).join: $list_sep;
         }
         my $row_count = $sql<insert_into_args>.elems;
         $tmp.push: $indent ~ '[' ~ insert-sep( $row_count, $!o<G><thsd-sep> ) ~ ' rows]';
     }
     else {
         for $sql<insert_into_args>.list -> $row {
-            $tmp.push: $indent ~ $row.map( { $_ // '' } ).join: $list_sep;
+            $tmp.push: $indent ~ $row.map({ $_ // '' }).join: $list_sep;
         }
     }
     return $tmp;
@@ -147,14 +134,14 @@ method !select_cols ( $sql ) {
     if ! @cols.elems {
         if $!i<special_table> eq 'join' {
             # So that qualified col names are used in the prepare stmt
-            return ' ' ~ $sql<cols>.join: ', ';
+            return ' ' ~ $sql<cols>.join: $list_sep;
         }
         else {
             return " *";
         }
     }
     elsif ! $sql<alias>.keys {
-        return ' ' ~ @cols.join: ', ';
+        return ' ' ~ @cols.join: $list_sep;
     }
     else {
         my @cols_alias;
@@ -166,7 +153,7 @@ method !select_cols ( $sql ) {
                 @cols_alias.push: $_;
             }
         }
-        return ' ' ~ @cols_alias.join: ', ';
+        return ' ' ~ @cols_alias.join: $list_sep;
     }
 }
 
@@ -206,7 +193,7 @@ method stmt_placeholder_to_value ( $stmt is copy, $args, $quote = 0 ) {
     for $args.list -> $arg {
         my $arg_copy;
         if $quote && $arg && $arg !~~ Numeric {
-            $arg_copy = $!d<dbh>.quote( $arg );
+            $arg_copy = self.quote( $arg );
         }
         else {
             $arg_copy = $arg;
@@ -269,7 +256,6 @@ method quote-identifier ( *@identifier_components ) {
 method quote_table ( $td ) {
     my @idx = $!o<G><qualified-table-name> ?? |( 0 .. 2 ) !! 2;
     if $!o<G><quote-identifiers> {
-        #return $!d<dbh>.quote-identifier( $td[@idx] );
         return self.quote-identifier( $td[@idx] );
     }
     return $td[@idx].grep({ .defined && .chars }).join: $!i<sep-char>;
@@ -278,60 +264,53 @@ method quote_table ( $td ) {
 
 method quote_col_qualified ( $cd ) {
     if $!o<G><quote-identifiers> {
-        #return $!d<dbh>.quote-identifier( $cd );
         return self.quote-identifier( |$cd );
     }
     return $cd.grep({ .defined && .chars }).join: $!i<sep_char>;;
 }
 
 
-method quote_simple_many ( $list ) {
+method quote_simple_many ( @list ) {
     if $!o<G><quote-identifiers> {
-        #return [ $list.map: { $!d<dbh>.quote-identifier( $_ ) } ];
-        return [ $list.map: { self.quote-identifier( $_ ) } ];
+        return [ @list.map: { self.quote-identifier( $_ ) } ]; #
     }
-    return [ |$list ];
+    return [ |@list ]; #
 }
 
 
 method backup_href ( $href ) {
-    #my $backup = {};
-    #for $href.keys {
-    #    if ref $href{$_} eq 'ARRAY' {
-    #        $backup{$_} = [ |$href{$_} ];
-    #    }
-    #    elsif ref $href{$_} eq 'HASH' {
-    #        $backup{$_} = { |$href{$_} };
-    #    }
-    #    else {
-    #        $backup{$_} = $href{$_};
-    #    }
-    #}
-    #return $backup;
-    return clone ( $href )
+    #return clone ( $href );
+    my $backup = {};
+    for $href.keys {
+        if $href{$_} ~~ Array {
+            $backup{$_} = [ |$href{$_} ];
+        }
+        elsif $href{$_} ~~ Hash {
+            $backup{$_} = { |$href{$_} };
+        }
+        else {
+            $backup{$_} = $href{$_};
+        }
+    }
+    return $backup;
 }
 
 
-method reset_sql ( $sql ) {
-    my $backup = {};
+method reset_sql ( $sql is rw ) {
+    my $keep = {};
     for <db schema table cols> -> $y {
-        $backup{$y} = $sql{$y} if $sql{$y}:exists;
+        $keep{$y} = $sql{$y} if $sql{$y}:exists;
     }
-    $sql.keys.map: { $sql{$_}:delete }; # not $sql = {} so $sql is still pointing to the outer $sql
+    $sql = $keep;
     my @string = <distinct_stmt set_stmt where_stmt group_by_stmt having_stmt order_by_stmt limit_stmt offset_stmt>;
-    my @array  = <cols group_by_cols aggr_cols
-                     select_cols
-                     set_args where_args having_args
-                     insert_into_cols insert_into_args
-                     create_table_cols>;
-    my @hash = <alias>;
+    my @hash   = <alias>;
+    my @array  = <cols group_by_cols aggr_cols select_cols insert_into_cols create_table_cols
+                  set_args where_args having_args insert_into_args>;
     $sql{@string} = '' xx @string.elems;
     $sql{@array}  = [] xx @array.elems;
     $sql{@hash}   = {} xx @hash.elems;
-    for $backup.keys -> $y {
-        $sql{$y} = $backup{$y};
-    }
 }
+
 
 method print_error_message ( $e, $info? is copy ) {
     if $info {
@@ -339,7 +318,7 @@ method print_error_message ( $e, $info? is copy ) {
     }
     $*ERR.say: $e.message;
     for $e.backtrace.reverse {
-        next if ! .subname;
+        #next if ! .subname;
         next if .subname.starts-with('<unit');
         next if .subname.starts-with('MAIN');
         next if .file.starts-with('SETTING::');
@@ -350,7 +329,6 @@ method print_error_message ( $e, $info? is copy ) {
         [ 'Press ENTER to continue' ],
         :prompt( '' )
     );
-    #hide-cursor();
 }
 
 
@@ -358,7 +336,7 @@ method column_names_and_types ( $tables ) { #
     my ( $col_names, $col_types );
     for $tables.list -> $table {
         try { # p5
-            my $sth = $!d<dbh>.prepare( "SELECT * FROM " ~ self.quote_table( $!d<tables_info>{$table} ) ~ " LIMIT 0" );
+            my $sth = $!d<dbh>.prepare: "SELECT * FROM " ~ self.quote_table( $!d<tables_info>{$table} ) ~ " LIMIT 0";
             if $!i<driver> ne 'SQLite' {
                 $sth.execute();
             }
@@ -375,17 +353,17 @@ method column_names_and_types ( $tables ) { #
 
 
 method write_json ( $file, %perl ) {
-    my $json = to-json( %perl );
+    my $json = to-json %perl;
     spurt $file, $json;
 }
 
 
 method read_json ( $file ) {
-    return {} if ! $file.IO.f;
+    return {} if ! $file.IO.f; #
     my $json = slurp $file;
     return {} if ! $json;
     try {
-        my %perl = from-json( $json );
+        my %perl = from-json $json;
         CATCH {
             die "In '$file':\n$_";
         }
@@ -395,9 +373,9 @@ method read_json ( $file ) {
 
 
 
-sub clone ( %orig ) is export {
-    return %orig.deepmap( -> $c is copy { $c } );
-}
+#sub clone ( %orig ) is export {
+#    return %orig.deepmap( -> $c is copy { $c } ); # :alias(-> ;; $_? is raw { #`(Block|79824272) ... }),
+#}
 
 
 #sub clone ( %orig ) is export {

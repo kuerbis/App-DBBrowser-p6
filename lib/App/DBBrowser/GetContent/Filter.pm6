@@ -21,7 +21,6 @@ has $!empty_to_null;
 method input_filter ( $sql, $default_e2n ) {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $tc = Term::Choose.new( |$!i<default> );
-    my $backup = [ |$sql<insert_into_args>.map: { [ |$_ ] } ]; # clone
     my $waiting = 'Working ... ';
     my $confirm          = '    OK';
     my $back             = '    <<';
@@ -38,6 +37,7 @@ method input_filter ( $sql, $default_e2n ) {
     my $cols_to_rows     = 'Cols2Rows';
     my $reset            = 'Reset';
     $!empty_to_null = $default_e2n;
+    my Array @bu = |$sql<insert_into_args>.map: { [ |$_ ] };
     $!i<idx_added_cols> = [];
     my $old_idx = 0;
 
@@ -65,7 +65,7 @@ method input_filter ( $sql, $default_e2n ) {
         }
         given @choices[$idx] {
             when $reset {
-                $sql<insert_into_args> = [ |$backup.map: { [ |$_ ] } ];
+                $sql<insert_into_args> = [ |@bu.map: { [ |$_ ] } ];
                 $!empty_to_null = $default_e2n;
                 next FILTER
             }
@@ -116,8 +116,14 @@ method input_filter ( $sql, $default_e2n ) {
 
 method !_empty_to_null {
     my $tu = Term::Choose::Util.new( |$!i<default> );
-    my %tmp = :empty_to_null( $!empty_to_null );
-    $tu.settings-menu( [ [ 'empty_to_null', "  Empty fields to NULL", [ 'NO', 'YES' ] ] ], %tmp );
+    
+    my %tmp = ( :empty_to_null( $!empty_to_null ) );
+    
+    $tu.settings-menu(
+        [ [ 'empty_to_null', "- Empty fields to NULL", [ 'NO', 'YES' ] ], ],
+        %tmp
+    );
+    
     $!empty_to_null = %tmp<empty_to_null>;
 }
 
@@ -152,7 +158,7 @@ method !_prepare_header_and_mark ( $aoa ) { ##
         }
     }
     if $mark.elems == $col_count {
-        $mark = Any; # no preselect if all cols have entries
+        $mark = []; # no preselect if all cols have entries
     }
     return $header, $mark;
 }
@@ -167,7 +173,7 @@ method !_choose_columns ( $sql ) {
     my $col_idx = $tu.choose-a-subset(
         $header,
         :back( '<<' ), :confirm( $!i<ok> ), :1index, :$mark, :0layout, :1all-by-default, :name( 'Cols: ' ) # :$mark
-        :0clear-screen, :0order # order
+        :0clear-screen, :0order
     );
     if ! $col_idx.defined {
         return;
@@ -196,7 +202,7 @@ method !_choose_rows ( $sql, $waiting ) {
         my @choices_rows;
         if @keys_sorted.elems == 1 {
             $row_idxs = [ 0 .. $aoa.end ];
-            @choices_rows = |$aoa.map: { ($_//'').join: ',' };
+            @choices_rows = |$aoa.map: { ( $_ // '' ).join: ',' };
         }
         else {
             my @choices_groups;
@@ -482,7 +488,7 @@ method !_search_and_replace ( $sql, $waiting ) {
         my $mods = [ 'g', 'i', 'e', 'e' ];
         my $chosen_mods = [];
         my $info_fmt = "s/%s/%s/%s;\n";
-        my @bu;
+        my Array @bu;
 
         MODIFIERS: loop {
             $ax.print_sql( $sql, $waiting );
@@ -490,10 +496,10 @@ method !_search_and_replace ( $sql, $waiting ) {
             my $info = sprintf $info_fmt, '', '', $mods_str;
             my @pre = Any, $!i<ok>;
             # Choose
-            my @idx = $tc.choose.multi(
+            my @idx = $tc.choose-multi(
                 [ |@pre, |$mods.map: { "[$_]" } ],
-                $!i<lyt_h>, :prompt( 'Modifieres: ' ), :$info, :meta-items( |( 0 .. @pre.end ) ), :2include-highlighted,
-                :1index
+                |$!i<lyt_h>, :prompt( 'Modifieres: ' ), :$info, :meta-items( |( 0 .. @pre.end ) ),
+                :2include-highlighted, :1index
             );
             my $last;
             if ! @idx[0] {
@@ -508,8 +514,7 @@ method !_search_and_replace ( $sql, $waiting ) {
             }
             @bu.push: [ [ |$mods ], [ |$chosen_mods ] ];
             for @idx.reverse -> $i {
-                $i -= @pre.elems;
-                $chosen_mods.push: $mods.splice: $i, 1;
+                $chosen_mods.push: $mods.splice: $i - @pre.elems, 1;
             }
             if $last.defined {
                 last MODIFIERS;

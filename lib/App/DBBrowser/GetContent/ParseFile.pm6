@@ -41,7 +41,7 @@ sub _unescape ( $str ) {
 
 
 method parse_file_Text_CSV ( $sql, $file ) { # 0
-    $!d<sheet_name>:delete;
+    #$!d<sheet_name>:delete; # no spreadsheet reading yet
     my $waiting = 'Parsing file ... ';
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     $ax.print_sql( $sql, $waiting );
@@ -59,7 +59,7 @@ method parse_file_Text_CSV ( $sql, $file ) { # 0
 
 
 method parse_file_split ( $sql, $file ) { # 1
-    $!d<sheet_name>:delete;
+    #$!d<sheet_name>:delete; # no spreadsheet reading yet
     my $waiting = 'Parsing file ... ';
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     $ax.print_sql( $sql, $waiting );

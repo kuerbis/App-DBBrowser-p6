@@ -20,26 +20,27 @@ method attach_db {
     my $tc = Term::Choose.new( |$!i<default> );
     my $tf = Term::Form.new( :1loop );
     my $cur_attached;
-    if ! $!i<f_attached_db>.IO.z { ## .
-        my $h_ref = $ax.read_json( $!i<f_attached_db> );
+    if ! $!i<f_attached_db>.IO.z { #
+        my $h_ref = $ax.read_json: $!i<f_attached_db>;
         $cur_attached = $h_ref{$!d<db>} || [];
     }
-    my $choices = [ Any, |$!d<user_dbs>, |$!d<sys_dbs> ];
+    my @choices = Any, |$!d<user_dbs>, |$!d<sys_dbs>;
     my $new_attached = [];
 
     ATTACH: loop {
 
         DB: loop {
             my @tmp_info = $!d<db_string>;
-            for ( |$cur_attached, |$new_attached ) -> $ref { ##
+            for |$cur_attached, |$new_attached -> $ref {
                 @tmp_info.push: sprintf "ATTACH DATABASE %s AS %s", |$ref;
             }
             @tmp_info.push: '';
             my $info = @tmp_info.join: "\n";
-            my $prompt = "ATTACH DATABASE"; # \n
+            my $prompt = "Choose DB:";
+            # Choose
             my $db = $tc.choose(
-                $choices,
-                :$prompt, :$info, :undef( $!i<back> ), :1clear-screen
+                @choices,
+                |$!i<lyt_v_clear>, :$prompt, :$info, :undef( $!i<back> )
             );
             if ! $db.defined {
                 if $new_attached.elems {
@@ -58,6 +59,7 @@ method attach_db {
                 }
                 elsif $alias eq ( |$cur_attached, |$new_attached ).map({ $_[1] }).any {
                     my $prompt = "alias '$alias' already used:";
+                    # Choose
                     my $retry = $tc.choose(
                         [ Any, 'New alias' ],
                         :$prompt, :$info, :undef( $!i<back> ), :1clear-screen
@@ -73,14 +75,14 @@ method attach_db {
 
             POP_ATTACHED: loop {
                 my @tmp_info = $!d<db_string>;
-                @tmp_info.push: ( |$cur_attached, |$new_attached ).map: { "ATTACH DATABASE $_[0] AS $_[1]" };
+                @tmp_info.append: ( |$cur_attached, |$new_attached ).map: { "ATTACH DATABASE $_[0] AS $_[1]" };
                 @tmp_info.push: '';
                 my $info = @tmp_info.join: "\n";
-                my $prompt = 'Choose:';
                 my ( $ok, $more ) = ( 'OK', '++' );
+                # Choose
                 my $choice = $tc.choose(
                     [ Any, $ok, $more ],
-                    :$prompt, :$info, :undef( '<<' ), :1clear-screen
+                    :$info, :1clear-screen
                 );
                 if ! $choice.defined {
                     if $new_attached.elems > 1 {
@@ -93,9 +95,9 @@ method attach_db {
                     if ! $new_attached.elems {
                         return;
                     }
-                    my $h_ref = $ax.read_json( $!i<f_attached_db> );
+                    my $h_ref = $ax.read_json: $!i<f_attached_db>;
                     $h_ref.{$!d<db>} = [ ( |$cur_attached, |$new_attached  ).sort ];
-                    $ax.write_json( $!i<f_attached_db>, $h_ref );
+                    $ax.write_json: $!i<f_attached_db>, $h_ref;
                     return 1;
                 }
                 elsif $choice eq $more {
@@ -111,22 +113,21 @@ method detach_db {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $tc = Term::Choose.new( |$!i<default> );
     my $attached_db;
-    if ! $!i<f_attached_db>.IO.z { ##
+    if ! $!i<f_attached_db>.IO.z { #
         my $h_ref = $ax.read_json( $!i<f_attached_db> );
         $attached_db = $h_ref.{$!d<db>} // [];
     }
     my @chosen;
 
     loop {
-        my @tmp_info = ( $!d<db_string>, 'Detach:' );
-
-        for @chosen -> $detach { ##
-            @tmp_info.push: sprintf 'DETACH DATABASE %s (%s)', $detach[1], $detach[0];
+        my @tmp_info = $!d<db_string>, 'Detach:';
+        for @chosen -> @detach {
+            @tmp_info.push: sprintf 'DETACH DATABASE %s (%s)', @detach[1], @detach[0];
         }
         my $info = @tmp_info.join: "\n";
         my @choices;
-        for $attached_db.list -> $elem { ##
-            @choices.push: sprintf '- %s  (%s)', |$elem[1,0];
+        for $attached_db.list -> @elem { ##
+            @choices.push: sprintf '- %s  (%s)', @elem[1,0];
         }
         my $prompt = "\n" ~ 'Choose:';
         my @pre = Any, $!i<_confirm>;
@@ -139,17 +140,17 @@ method detach_db {
             return;
         }
         elsif $idx == @pre.end {
-            my $h_ref = $ax.read_json( $!i<f_attached_db> );
+            my $h_ref = $ax.read_json: $!i<f_attached_db>;
             if $attached_db.elems {
-                $h_ref.{$!d<db>} = $attached_db;
+                $h_ref{$!d<db>} = $attached_db;
             }
             else {
-                $h_ref.{$!d<db>}:delete;
+                $h_ref{$!d<db>}:delete;
             }
-            $ax.write_json( $!i<f_attached_db>, $h_ref );
+            $ax.write_json: $!i<f_attached_db>, $h_ref;
             return 1;
         }
-        @chosen.push: $attached_db.splice: $idx - @pre.elems, 1;
+        @chosen.append: $attached_db.splice: $idx - @pre.elems, 1;
     }
 }
 

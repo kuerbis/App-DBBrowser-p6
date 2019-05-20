@@ -60,13 +60,13 @@ method !_choose_drop_item ( $type ) {
 
 
 method !_drop ( $sql, $type is copy ) {
+    my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
+    my $tc = Term::Choose.new( |$!i<default> );
     if $type ne 'view' {
         $type = 'table';
     }
     my $stmt_type = 'Drop_' ~ $type;
     $!i<stmt_types> = [ $stmt_type ];
-    my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
-    my $tc = Term::Choose.new( |$!i<default> );
     $ax.print_sql( $sql );
     # Choose
     my $ok = $tc.choose(
@@ -77,7 +77,7 @@ method !_drop ( $sql, $type is copy ) {
         return;
     }
     $ax.print_sql( $sql, 'Computing: ... ' );
-# begin try
+
     my $sth = $!d<dbh>.prepare( "SELECT * FROM " ~ $sql<table> );
     $sth.execute();
     my $col_names = $sth.column-names(); # mysql: $sth.{NAME} before fetchall_arrayref
@@ -88,10 +88,9 @@ method !_drop ( $sql, $type is copy ) {
     my $tt = Term::TablePrint.new( |$!o<table>, :1loop );
     $tt.print-table(
         @all_arrayref,
-        :$prompt, :1grid, :0max-rows, :1keep-header, :table-expand( $!o<G><info-expand> ) #:2grid
+        :$prompt, :2grid, :0max-rows, :1keep-header, :table-expand( $!o<G><info-expand> )
     );
     $prompt = sprintf 'DROP %s %s  (%s %s)', $type.uc, $sql<table>, insert-sep( $row_count, $!o<G><thsd-sep> ), $row_count == 1 ?? 'row' !! 'rows';
-# end try
     $prompt ~= "\n\nCONFIRM:";
     # Choose
     my $choice = $tc.choose(
@@ -246,7 +245,7 @@ method !_create ( $sql, $type ) {
         return;
     }
     my $stmt = $ax.get_stmt( $sql, 'Create_' ~ $type, 'prepare' );
-    try {
+    try { ###
         $!d<dbh>.do( $stmt );
         CATCH { default {
             $ax.print_error_message( $_, 'Create table' );
@@ -291,13 +290,13 @@ method !_set_table_name ( $sql ) {
         my $info = '';
         my $default = '';
         if $!d<file_name>.defined {
-            my $file = ( $!d<file_name>:delete ).IO.basename; ##
+            my $file = $!d<file_name>:delete.IO.basename;
             $info = sprintf "File: '%s'", $file;
             $default = $file.subst( / \. <-[\.]> ** 1..4 $ /, '' );
         }
-        if $!d<sheet_name>.defined && $!d<sheet_name>.chars {
-            $default ~= '_' ~ $!d<sheet_name>:delete;
-        }
+        #if $!d<sheet_name>.defined && $!d<sheet_name>.chars {  # no spreadsheet reading yet
+        #    $default ~= '_' ~ $!d<sheet_name>:delete;
+        #}
         $default ~~ s:g/ \s /_/; # ::
         # Readline
         $table = $tf.readline( 'Table name: ', :$info, :$default );
@@ -407,7 +406,7 @@ method !_header_row ( $sql ) {
         $header_row = $sql<insert_into_args>.shift;
     }
     else {
-        for ( $!i<idx_added_cols> // [] ).list -> $col_idx {
+        for ( $!i<idx_added_cols> // [] ).list -> $col_idx { # if ### ### ###
             $sql<insert_into_args>[0][$col_idx] = Any;
         }
         my $c = 0;

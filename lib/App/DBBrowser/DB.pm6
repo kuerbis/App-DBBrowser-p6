@@ -35,7 +35,7 @@ method new ( :$i, :$o ) {
 ## mandatory:
 
 method get_db_driver {
-    my $db_type = $!P.get_db_driver(); # or die "No db driver!";
+    my $db_type = $!P.get_db_driver();
     return $db_type;
 }
 
@@ -438,10 +438,6 @@ method char_length ( $col ) {
 =head1 NAME
 
 App::DBBrowser::DB - Database plugin documentation.
-
-=head1 VERSION
-
-Version 0.001
 
 =head1 DESCRIPTION
 

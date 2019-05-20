@@ -20,6 +20,8 @@ has $!join_types;
 
 
 method join_tables {
+    my $tc = Term::Choose.new( |$!i<default> );
+    my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     $!i<stmt_types> = [ 'Join' ];
     if $!i<driver> eq 'SQLite' {
         $!join_types = [ 'INNER JOIN', 'LEFT JOIN', 'CROSS JOIN' ];
@@ -30,8 +32,6 @@ method join_tables {
     else {
         $!join_types = [ 'INNER JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'FULL JOIN', 'CROSS JOIN' ];
     }
-    my $tc = Term::Choose.new( |$!i<default> );
-    my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $tables = [ |$!d<tables_info>.keys.sort ];
     ( $!d<col_names>, $!d<col_types> ) = $ax.column_names_and_types( $tables );
     my $join = {};
@@ -39,8 +39,8 @@ method join_tables {
     MASTER: while ( 1 ) {
         $join = {};
         $join<stmt> = "SELECT * FROM";
-        $join<used_tables>  = [];
-        $join<aliases>      = [];
+        $join<used_tables> = [];
+        $join<aliases>     = [];
         $ax.print_sql( $join );
         my $info = '  INFO';
         my $from_subquery = '  Derived';
@@ -81,18 +81,18 @@ method join_tables {
         # Readline
         my $master_alias = $ax.alias( 'join', $qt_master, $join<default_alias> );
         $join<aliases>.push: [ $master, $master_alias ];
-        $join<stmt> ~= " " ~ $qt_master;
-        $join<stmt> ~= " AS " ~ $ax.quote_col_qualified( [ $master_alias ] );
+        $join<stmt> ~= " " ~ $qt_master ~ " AS " ~ $ax.quote_col_qualified( [ $master_alias ] );
         if $master eq $qt_master {
             my $sth = $!d<dbh>.prepare( "SELECT * FROM " ~ $qt_master ~ " AS " ~ $master_alias ~ " LIMIT 0" );
-            $sth.execute() if $!i<driver> ne 'SQLite';
+            if $!i<driver> ne 'SQLite' {
+                $sth.execute();
+            }
             $!d<col_names>{$master} = $sth.column-names();
         }
         my @bu;
 
         JOIN: loop {
             $ax.print_sql( $join );
-            my $backup_join = $ax.backup_href( $join );
             my $enough_tables = '  Enough TABLES';
             my @pre = Any, $enough_tables;
             # Choose
@@ -125,8 +125,8 @@ method join_tables {
     }
 
     my $aliases_by_tables = {};
-    for $join<aliases>.list -> $ref { ##
-        $aliases_by_tables{$ref[0]}.push: $ref[1];
+    for $join<aliases>.list -> ( $table, $alias ) {
+        $aliases_by_tables{$table}.push: $alias;
     }
     my $qt_columns = [];
     for $join<used_tables>.list -> $table {
@@ -140,10 +140,7 @@ method join_tables {
             }
         }
     }
-    my $qt_table = $join<stmt>;                             ##
-    #$qt_table ~~ / ^ SELECT \s \* \s FROM \s ( .* ) $ /;    ##
-    $qt_table ~~ s/ ^ SELECT \s \* \s FROM \s //;    ##
-    
+    my $qt_table = $join<stmt>.subst( / ^ SELECT \s \* \s FROM \s /, '' );
     return $qt_table, $qt_columns;
 }
 
@@ -206,13 +203,14 @@ method !_add_slave_with_join_condition ( $join, $tables, $join_type, $info ) {
         $ax.print_sql( $join );
         # Readline
         my $slave_alias = $ax.alias( 'join', $qt_slave, ++$join<default_alias> );
-        $join<stmt> ~= " " ~ $qt_slave;
-        $join<stmt> ~= " AS " ~ $ax.quote_col_qualified( [ $slave_alias ] );
+        $join<stmt> ~= " " ~ $qt_slave ~ " AS " ~ $ax.quote_col_qualified( [ $slave_alias ] );
         $join<aliases>.push: [ $slave, $slave_alias ];
         $ax.print_sql( $join );
         if $slave eq $qt_slave {
             my $sth = $!d<dbh>.prepare( "SELECT * FROM " ~ $qt_slave ~ " AS " ~ $slave_alias ~ " LIMIT 0" );
-            $sth.execute() if $!i<driver> ne 'SQLite';
+            if $!i<driver> ne 'SQLite' {
+                $sth.execute();
+            }
             $!d<col_names>{$slave} = $sth.column-names();
         }
         if $join_type ne 'CROSS JOIN' {
@@ -234,8 +232,8 @@ method !_add_join_condition ( $join, $tables, $slave, $slave_alias ) {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $tf = Term::Form.new( :1loop );
     my $aliases_by_tables = {};
-    for $join<aliases>.list -> $ref { ##
-        $aliases_by_tables{$ref[0]}.push: $ref[1];
+    for $join<aliases>.list -> ( $table, $alias ) {
+        $aliases_by_tables{$table}.push: $alias;
     }
     my %avail_pk_cols;
     for $join<used_tables>.list -> $used_table {
@@ -280,16 +278,15 @@ method !_add_join_condition ( $join, $tables, $slave, $slave_alias ) {
                 if ! $AND {
                     return;
                 }
-                my $condition = $join<stmt>;            ##
-                $condition ~~ s/ ^ $bu_stmt \s //;       ##
-                $join<stmt> = $bu_stmt;
+                my $join_condition = $join<stmt>.subst( / ^ $bu_stmt \s /, '' );
+                $join<stmt> = $bu_stmt; # ? 
                 $ax.print_sql( $join );
                 # Readline
-                $condition = $tf.readline( 'Edit: ', :default( $condition ), :1show-context );
-                if ! $condition.defined {
+                $join_condition = $tf.readline( 'Edit: ', :default( $join_condition ), :1show-context );
+                if ! $join_condition.defined {
                     return;
                 }
-                $join<stmt> = $bu_stmt ~ " " ~ $condition;
+                $join<stmt> = $bu_stmt ~ " " ~ $join_condition;
                 return 1;
             }
             elsif $pk_col eq %avail_fk_cols.keys.map({ $fk_pre ~ $_ }).any {
@@ -297,8 +294,7 @@ method !_add_join_condition ( $join, $tables, $slave, $slave_alias ) {
             }
             $pk_col ~~ s/ ^ '-' \s //;
             @bu.push: [ $join<stmt>, $AND ];
-            $join<stmt> ~= $AND;
-            $join<stmt> ~= " " ~ %avail_pk_cols{$pk_col} ~ " " ~ '=';
+            $join<stmt> ~= $AND ~ " " ~ %avail_pk_cols{$pk_col} ~ " " ~ '=';
             last PRIMARY_KEY;
         }
 
@@ -344,7 +340,7 @@ method !_print_join_info {
         $r++;
     }
     my $tt = Term::TablePrint.new( :1loop );
-    $tt.print-table( $aref, :0keep-header, :3tab-width, :1grid ); # hide-cursor
+    $tt.print-table( $aref, :0keep-header, :3tab-width, :1grid );
 }
 
 

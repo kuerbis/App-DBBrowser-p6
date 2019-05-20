@@ -145,7 +145,7 @@ method commit_sql ( $sql ) {
             my $tt = Term::TablePrint.new( |$!o<table>, :1loop );
             $tt.print-table(
                 @all_arrayref,
-                :$prompt, :1grid, :0max-rows, :1keep-header, :table-expand( $!o<G><info-expand> ) # :2grid
+                :$prompt, :2grid, :0max-rows, :1keep-header, :table-expand( $!o<G><info-expand> )
             );
         }
     }
