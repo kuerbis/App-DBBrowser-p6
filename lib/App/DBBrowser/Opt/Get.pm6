@@ -122,7 +122,7 @@ method read_config_files {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o );
     my $file_name = $!i<f_settings>;
     if $file_name.IO.f && ! $file_name.IO.z {
-        my $tmp = $ax.read_json( $file_name );
+        my $tmp = $ax.read_json: $file_name;
         for $tmp.keys -> $section {
             for $tmp{$section}.keys -> $opt {
                 $o{$section}{$opt} = $tmp{$section}{$opt} if $o{$section}{$opt}:exists;

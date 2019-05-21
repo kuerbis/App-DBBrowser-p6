@@ -10,7 +10,7 @@
     "JSON::Fast",
     "Term::Choose:ver<1.5.6+>",
     "Term::Choose::Util:ver<1.2.7+>",
-    "Term::Form:ver<1.2.3+>",
+    "Term::Form:ver<1.2.4+>",
     "Term::TablePrint:ver<1.4.7+>",
     "Text::CSV"
   ],
@@ -50,5 +50,5 @@
   "test-depends" : [
     "Test"
   ],
-  "version" : "0.0.6"
+  "version" : "0.0.7"
 }

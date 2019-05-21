@@ -224,7 +224,7 @@ method !_write_db_config_files ( $db_opt ) {
     $plugin~~ s/ ^ 'App::DBBrowser::DB::' //;
     my $file_name = sprintf( $!i<conf_file_fmt>, $plugin );
     if $db_opt.defined && $db_opt.keys {
-        $ax.write_json( $file_name, $db_opt );
+        $ax.write_json: $file_name, $db_opt;
     }
 }
 

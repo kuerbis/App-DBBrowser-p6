@@ -1,5 +1,5 @@
 use v6;
-unit class App::DBBrowser:ver<0.0.6>;
+unit class App::DBBrowser:ver<0.0.7>;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
@@ -259,7 +259,7 @@ method run {
 
             $!i<db_attached>   = 0;
             if $!i<driver> eq 'SQLite' && ! $!i<f_attached_db>.IO.z {
-                my $h_ref = $ax.read_json( $!i<f_attached_db> );
+                my $h_ref = $ax.read_json: $!i<f_attached_db>;
                 my $attached_db = $h_ref{$db} // [];
                 if $attached_db.elems {
                     for $attached_db.list -> ( $db, $name ) {
@@ -542,7 +542,6 @@ method !browse_the_table ( $qt_table, $qt_columns ) {
         my $all_arrayref;
         try {
             my $tt = App::DBBrowser::Table.new( :$!i, :$!o, :$!d );
-            #( $all_arrayref, $sql ) = $tt.on_table( $sql ); ### 
             $all_arrayref = $tt.on_table( $sql );
             CATCH { default {
                 $ax.print_error_message( $_, 'Print table' );

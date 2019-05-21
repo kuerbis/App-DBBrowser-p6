@@ -74,10 +74,10 @@ method get_stmt ( $sql, $stmt_type, $used_for ) {
     elsif $stmt_type eq 'Union' {
         @tmp = $used_for eq 'print' ?? "SELECT * FROM (" !! "(";
         my $count = 0;
-        for $sql<subselect_data>.list -> @ref {
+        for $sql<subselect_data>.list -> ( $table, $col_names ) {
             ++$count;
-            my $str = $in x 2 ~ "SELECT " ~ @ref[1].join: $list_sep;
-            $str ~= " FROM " ~ @ref[0];
+            my $str = $in x 2 ~ "SELECT " ~ $col_names.join: $list_sep;
+            $str ~= " FROM " ~ $table;
             if $count < $sql<subselect_data>.elems {
                 $str ~= " UNION ALL ";
             }

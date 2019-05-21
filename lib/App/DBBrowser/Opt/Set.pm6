@@ -22,7 +22,7 @@ use App::DBBrowser::Opt::DBSet;
 has $.o;
 has $.i;
 
-has $!avail_operators = [
+has @!avail_operators = [
     "REGEXP", "REGEXP_i", "NOT REGEXP", "NOT REGEXP_i", "LIKE", "NOT LIKE", "IS NULL", "IS NOT NULL",
     "IN", "NOT IN", "BETWEEN", "NOT BETWEEN", " = ", " != ", " <> ", " < ", " > ", " >= ", " <= ",
     " = col", " != col", " <> col", " < col", " > col", " >= col", " <= col",
@@ -268,53 +268,52 @@ method set_options ( $arg_groups = _groups(), $arg_options? ) { ###
             }
             elsif $opt eq 'operators' {
                 my $prompt = 'Choose operators';
-                self!choose_a_subset_wrap( $section, $opt, $!avail_operators, $prompt );
+                self!choose_a_subset_wrap( $section, $opt, @!avail_operators, $prompt );
             }
 
             elsif $opt eq '_file_encoding' {
-                my $items = [
+                my @items =
                     { name => 'file-encoding', prompt => "file-encoding" },
-                ];
+                ;
                 my $prompt = 'Encoding CSV files';
-                self!group_readline( $section, $items, $prompt );
+                self!group_readline( $section, @items, $prompt );
             }
             elsif $opt eq '_csv_char' {
-                my $items = [
+                my @items =
                     { name => 'sep-char',    prompt => "sep-char   " },
                     { name => 'quote-char',  prompt => "quote-char " },
                     { name => 'escape-char', prompt => "escape-char" },
                     { name => 'eol',         prompt => "eol        " },
-                ];
+                ;
                 my $prompt = 'Text::CSV a';
-                self!group_readline( $section, $items, $prompt );
+                self!group_readline( $section, @items, $prompt );
             }
             elsif $opt eq '_split_config' {
-                my $items = [
+                my @items =
                     { name => 'field-sep',     prompt => "Field separator  " },
                     { name => 'field-l-trim',  prompt => "Trim field left  " },
                     { name => 'field-r-trim',  prompt => "Trim field right " },
                     { name => 'record-sep',    prompt => "Record separator " },
                     { name => 'record-l-trim', prompt => "Trim record left " },
                     { name => 'record-r-trim', prompt => "Trim record right" },
-
-                ];
+                ;
                 my $prompt = 'Config \'split\' mode';
-                self!group_readline( $section, $items, $prompt );
+                self!group_readline( $section, @items, $prompt );
             }
             elsif $opt eq '_set_string' {
-                my $items = [
+                my @items =
                     { name => 'decimal-separator', prompt => "Decimal separator" },
                     { name => 'undef',             prompt => "Undefined field  " },
-                ];
+                ;
                 my $prompt = 'Set strings';
-                self!group_readline( $section, $items, $prompt );
+                self!group_readline( $section, @items, $prompt );
             }
             elsif $opt eq '_autoincrement_col_name' {
-                my $items = [
+                my @items =
                     { name => 'autoincrement-col-name', prompt => "AI column name" },
-                ];
+                ;
                 my $prompt = 'Default auto increment column name';
-                self!group_readline( $section, $items, $prompt );
+                self!group_readline( $section, @items, $prompt );
             }
             elsif $opt eq 'history-dirs' {
                 my $digits = 2;
@@ -558,14 +557,14 @@ method !settings_menu_wrap ( $section, @sub_menu, $prompt ) {
 }
 
 
-method !choose_a_subset_wrap ( $section, $opt, $available, $prompt ) {
+method !choose_a_subset_wrap ( $section, $opt, @available, $prompt ) {
     my $tu = Term::Choose::Util.new( |$!i<default> );
     my $current = $!o{$section}{$opt};
     # Choose_list
     my $info = 'Cur: ' ~ $current.join: ', ';
     my $name = 'New: ';
     my $list = $tu.choose-a-subset(
-        $available,
+        @available,
         :$info, :$name, :$prompt, :prefix( '- ' ), :0index, :0keep-chosen,
         :1clear-screen, :back( $!i<back> ), :confirm( $!i<confirm> )
     );
@@ -596,16 +595,16 @@ method !choose_a_number_wrap ( $section, $opt, $prompt, $digits, $small-first ) 
 }
 
 
-method !group_readline ( $section, $items, $prompt ) {
+method !group_readline ( $section, @items, $prompt ) {
     my $tf = Term::Form.new( :1loop );
-    my $list = [ $items.map: { [ $_<prompt>:exists ?? $_<prompt> !! $_<name>, $!o{$section}{$_<name>} ] } ];
+    my $list = [ @items.map: { [ $_<prompt>:exists ?? $_<prompt> !! $_<name>, $!o{$section}{$_<name>} ] } ];
     my $new_list = $tf.fill-form(
         $list,
         :$prompt, :2auto-up, :confirm( $!i<confirm> ), :back( $!i<back> )
     );
     if $new_list {
-        for ^$items.end -> $i {
-            $!o{$section}{$items[$i]<name>} = $new_list[$i][1];
+        for 0 .. @items.end -> $i {
+            $!o{$section}{@items[$i]<name>} = $new_list[$i][1];
         }
         $!write_config++;
     }
@@ -636,7 +635,7 @@ method !write_config_files {
     }
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o );
     my $file_name = $!i<f_settings>;
-    $ax.write_json( $file_name, $tmp  );
+    $ax.write_json: $file_name, $tmp;
 }
 
 

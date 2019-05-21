@@ -37,7 +37,7 @@ method get_db_handle ( $db ) {
 method get_databases {
     my $cache_sqlite_files = $!i<db_cache_file>;
     my $ax = App::DBBrowser::Auxil.new(); ##
-    my %db_cache = $ax.read_json( $cache_sqlite_files );
+    my %db_cache = $ax.read_json: $cache_sqlite_files;
     my @dirs = |(%db_cache<directories> // []);
     if ! @dirs.elems {
         @dirs = $!i<home_dir>;
@@ -105,7 +105,7 @@ method get_databases {
         $databases .= sort;
         %db_cache<databases> = $databases;
     }
-    $ax.write_json( $cache_sqlite_files, %db_cache ); ##
+    $ax.write_json: $cache_sqlite_files, %db_cache; ##
     return $databases, [];
 }
 

@@ -60,7 +60,7 @@ method select ( $sql ) {
         @bu.push: [ [ |$sql<select_cols> ], { |$sql<alias> } ];
         if @choices[@idx[0]] eq $!i<ok> {
             @idx.shift;
-            $sql<select_cols>.append: @choices[@idx];
+            $sql<select_cols>.push: |@choices[@idx];
             return 1;
         }
         elsif @choices[@idx[0]] eq $expand_sign {
@@ -74,7 +74,7 @@ method select ( $sql ) {
             }
             next COLUMNS;
         }
-        $sql<select_cols>.append: @choices[@idx];
+        $sql<select_cols>.push: |@choices[@idx];
     }
 }
 
@@ -356,7 +356,7 @@ method group_by ( $sql ) {
         }
         elsif @choices[@idx[0]] eq $!i<ok> {
             @idx.shift;
-            $sql<group_by_cols>.append: @choices[@idx];
+            $sql<group_by_cols>.push: |@choices[@idx];
             if ! $sql<group_by_cols>.elems {
                 $sql<group_by_stmt> = '';
             }
@@ -373,7 +373,7 @@ method group_by ( $sql ) {
             }
             next GROUP_BY;
         }
-        $sql<group_by_cols>.append: @choices[@idx];
+        $sql<group_by_cols>.push: |@choices[@idx];
     }
 }
 

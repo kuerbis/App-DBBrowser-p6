@@ -177,8 +177,8 @@ method !_transaction ( $sql, $stmt_type, $rows_to_execute, $count_affected, $wai
         my $sth = $dbh.prepare(
             $ax.get_stmt( $sql, $stmt_type, 'prepare' )
         );
-        for $rows_to_execute.list -> $values { ##
-            $sth.execute( |$values );
+        for $rows_to_execute.list -> @values {
+            $sth.execute( @values );
         }
         my $commit_ok = sprintf '  %s %s "%s"', 'COMMIT', insert-sep( $count_affected, $!o<G><thsd-sep> ), $stmt_type;
         $ax.print_sql( $sql );
@@ -226,8 +226,8 @@ method !_auto_commit ( $sql, $stmt_type, $rows_to_execute, $count_affected, $wai
     try {
         my $stmt = $ax.get_stmt( $sql, $stmt_type, 'prepare' );
         my $sth = $dbh.prepare( $stmt );
-        for $rows_to_execute.list -> $values { ##
-            $sth.execute( |$values );
+        for $rows_to_execute.list -> @values {
+            $sth.execute( @values );
         }
         CATCH { default {
             $ax.print_error_message( $_, 'Auto Commit' );

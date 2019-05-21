@@ -116,14 +116,13 @@ method input_filter ( $sql, $default_e2n ) {
 
 method !_empty_to_null {
     my $tu = Term::Choose::Util.new( |$!i<default> );
-    
-    my %tmp = ( :empty_to_null( $!empty_to_null ) );
-    
+    my %tmp = :empty_to_null( $!empty_to_null );
     $tu.settings-menu(
-        [ [ 'empty_to_null', "- Empty fields to NULL", [ 'NO', 'YES' ] ], ],
+        [
+            [ 'empty_to_null', "- Empty fields to NULL", [ 'NO', 'YES' ] ],
+        ],
         %tmp
     );
-    
     $!empty_to_null = %tmp<empty_to_null>;
 }
 

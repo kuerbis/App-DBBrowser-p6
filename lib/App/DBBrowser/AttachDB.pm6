@@ -31,8 +31,8 @@ method attach_db {
 
         DB: loop {
             my @tmp_info = $!d<db_string>;
-            for |$cur_attached, |$new_attached -> $ref {
-                @tmp_info.push: sprintf "ATTACH DATABASE %s AS %s", |$ref;
+            for |$cur_attached, |$new_attached -> ( $db, $name ) {
+                @tmp_info.push: sprintf "ATTACH DATABASE %s AS %s", $db, $name;
             }
             @tmp_info.push: '';
             my $info = @tmp_info.join: "\n";
@@ -75,7 +75,7 @@ method attach_db {
 
             POP_ATTACHED: loop {
                 my @tmp_info = $!d<db_string>;
-                @tmp_info.append: ( |$cur_attached, |$new_attached ).map: { "ATTACH DATABASE $_[0] AS $_[1]" };
+                @tmp_info.push: |( |$cur_attached, |$new_attached ).map: { "ATTACH DATABASE $_[0] AS $_[1]" };
                 @tmp_info.push: '';
                 my $info = @tmp_info.join: "\n";
                 my ( $ok, $more ) = ( 'OK', '++' );
@@ -114,20 +114,20 @@ method detach_db {
     my $tc = Term::Choose.new( |$!i<default> );
     my $attached_db;
     if ! $!i<f_attached_db>.IO.z { #
-        my $h_ref = $ax.read_json( $!i<f_attached_db> );
+        my $h_ref = $ax.read_json: $!i<f_attached_db>;
         $attached_db = $h_ref.{$!d<db>} // [];
     }
     my @chosen;
 
     loop {
         my @tmp_info = $!d<db_string>, 'Detach:';
-        for @chosen -> @detach {
-            @tmp_info.push: sprintf 'DETACH DATABASE %s (%s)', @detach[1], @detach[0];
+        for @chosen -> ( $db, $name ) {
+            @tmp_info.push: sprintf 'DETACH DATABASE %s (%s)', $name, $db;
         }
         my $info = @tmp_info.join: "\n";
         my @choices;
-        for $attached_db.list -> @elem { ##
-            @choices.push: sprintf '- %s  (%s)', @elem[1,0];
+        for $attached_db.list -> ( $db, $name ) {
+            @choices.push: sprintf '- %s  (%s)', $name, $db;
         }
         my $prompt = "\n" ~ 'Choose:';
         my @pre = Any, $!i<_confirm>;
@@ -150,7 +150,7 @@ method detach_db {
             $ax.write_json: $!i<f_attached_db>, $h_ref;
             return 1;
         }
-        @chosen.append: $attached_db.splice: $idx - @pre.elems, 1;
+        @chosen.push: |$attached_db.splice: $idx - @pre.elems, 1;
     }
 }
 

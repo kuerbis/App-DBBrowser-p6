@@ -124,7 +124,7 @@ method !_union_table_columns ( $union, $union_table, $qt_union_table ) {
     my ( $privious_cols, $void ) = ( q['^'], q[' '] );
     my $next_idx = $union<subselect_data>.elems;
     my @table_cols;
-    my @bu_cols;
+    my @bu;
 
     loop {
         my @pre = Any, $!i<ok>, $union<saved_cols>.elems ?? $privious_cols !! $void;
@@ -135,8 +135,8 @@ method !_union_table_columns ( $union, $union_table, $qt_union_table ) {
             |$!i<lyt_h>, :prompt( 'Choose Column:' ), :meta-items(  0, 1, 2 ), :2include-highlighted
         );
         if ! @chosen[0].defined {
-            if @bu_cols {
-                @table_cols = @bu_cols.pop;
+            if @bu {
+                @table_cols = @bu.pop;
                 $union<subselect_data>[$next_idx] = [ $qt_union_table, $ax.quote_simple_many( @table_cols ) ];
                 next;
             }
@@ -157,7 +157,7 @@ method !_union_table_columns ( $union, $union_table, $qt_union_table ) {
         elsif @chosen[0] eq $!i<ok> {
             @chosen.shift;
             if @chosen.elems {
-                @table_cols.push: @chosen;
+                @table_cols.push: |@chosen;
             }
             if ! @table_cols.elems {
                 @table_cols = |$!d<col_names>{$union_table};
@@ -167,8 +167,8 @@ method !_union_table_columns ( $union, $union_table, $qt_union_table ) {
             return 1;
         }
         else {
-            @bu_cols.push: @table_cols;
-            @table_cols.push: @chosen;
+            @bu.push: @table_cols;
+            @table_cols.push: |@chosen;
             $union<subselect_data>[$next_idx] = [ $qt_union_table, $ax.quote_simple_many( @table_cols ) ];
         }
     }

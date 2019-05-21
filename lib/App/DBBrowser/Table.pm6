@@ -17,7 +17,7 @@ has $.o;
 has $.d;
 
 
-method on_table ( $sql is rw ) { ##
+method on_table ( $sql is rw ) {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $sb = App::DBBrowser::Table::Substatements.new( :$!i, :$!o, :$!d );
     my $tc = Term::Choose.new( |$!i<default> );
@@ -66,6 +66,7 @@ method on_table ( $sql is rw ) { ##
             my $ok = $sb.select( $sql );
             if ! $ok {
                 $sql = $backup_sql;
+                # ok to overwrite $sql with $backup_sql because $sql is rw
             }
         }
         elsif $custom eq $cu<distinct> {
@@ -140,8 +141,8 @@ method on_table ( $sql is rw ) { ##
             my $col_names = $sth.column-names();
             $sth.finish;
             @rows.unshift: $col_names;
-            return @rows; #, $sql;
-            #return $col_names, @rows, $sql;
+            return @rows;
+            #return $col_names, @rows;
         }
         else {
             die "'$custom': no such value in the hash \$cu";

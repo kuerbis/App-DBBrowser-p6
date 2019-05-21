@@ -343,7 +343,7 @@ method !_directory {
         return self!_new_dir_search();
     }
     elsif $!o<insert><history-dirs> == 1 {
-        my $h_ref = $ax.read_json( $!i<f_dir_history> );
+        my $h_ref = $ax.read_json: $!i<f_dir_history>;
         if ( $h_ref<dirs> // [] ).elems { ##
             return $h_ref<dirs>[0].IO;
         }
@@ -351,7 +351,7 @@ method !_directory {
     $!i<old_dir_idx> //= 0;
 
     DIR: loop {
-        my $h_ref = $ax.read_json( $!i<f_dir_history> );
+        my $h_ref = $ax.read_json: $!i<f_dir_history>;
         my @dirs = |( $h_ref<dirs> // [] ).sort; ###
         my $prompt = sprintf "Choose a dir:";
         my @pre = Any, '  NEW search';
@@ -402,7 +402,7 @@ method !_new_dir_search {
 
 method !_add_to_history ( Str $dir ) {
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
-    my $h_ref = $ax.read_json( $!i<f_dir_history> );
+    my $h_ref = $ax.read_json: $!i<f_dir_history>;
     my $dirs = $h_ref<dirs>;
     $dirs.unshift: $dir;
     $dirs = [ |$dirs.unique ];
@@ -410,7 +410,7 @@ method !_add_to_history ( Str $dir ) {
         $dirs.pop;
     }
     $h_ref<dirs> = $dirs;
-    $ax.write_json( $!i<f_dir_history>, $h_ref );
+    $ax.write_json: $!i<f_dir_history>, $h_ref;
 }
 
 

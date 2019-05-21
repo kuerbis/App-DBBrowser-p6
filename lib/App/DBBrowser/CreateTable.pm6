@@ -406,7 +406,7 @@ method !_header_row ( $sql ) {
         $header_row = $sql<insert_into_args>.shift;
     }
     else {
-        for ( $!i<idx_added_cols> // [] ).list -> $col_idx { # if ### ### ###
+        for ( $!i<idx_added_cols> // [] ).list -> $col_idx { #
             $sql<insert_into_args>[0][$col_idx] = Any;
         }
         my $c = 0;
