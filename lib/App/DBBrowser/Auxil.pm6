@@ -9,7 +9,7 @@ use JSON::Fast;
 
 use Term::Choose;
 use Term::Choose::LineFold :to-printwidth, :line-fold, :print-columns;
-use Term::Choose::Screen :clear, :get-term-size;
+use Term::Choose::Screen :clear, :get-term-width;
 use Term::Choose::Util :insert-sep;
 use Term::Form;
 
@@ -171,11 +171,11 @@ method print_sql ( $sql, $waiting = Str, :$return_str) {
         $str = $filled
     }
     $str ~= "\n";
-    $str = line-fold( $str, get-term-size().[0] - 2, '', ' ' x 4 ).join: "\n";
+    $str = line-fold( $str, get-term-width() - 2, '', ' ' x 4 ).join: "\n";
     if $return_str {
         return $str;
     }
-    clear();
+    print clear;
     print $str;
     #print line_fold( $str, term_width() - 2, '', ' ' x 4 );
     if $waiting.defined {
@@ -208,7 +208,7 @@ method stmt_placeholder_to_value ( $stmt is copy, $args, $quote = 0 ) {
 
 
 method alias ( $type, $identifier is copy, $default? ) {
-    my $term_w = get-term-size().[0];
+    my $term_w = get-term-width();
     my $info = '';
     if $identifier eq '' { # Union
         $identifier ~= 'UNION Alias: ';
@@ -335,7 +335,7 @@ method print_error_message ( $e, $info? is copy ) {
 method column_names_and_types ( $tables ) { # 
     my ( $col_names, $col_types );
     for $tables.list -> $table {
-        try { # p5
+        try {
             my $sth = $!d<dbh>.prepare: "SELECT * FROM " ~ self.quote_table( $!d<tables_info>{$table} ) ~ " LIMIT 0";
             if $!i<driver> ne 'SQLite' {
                 $sth.execute();

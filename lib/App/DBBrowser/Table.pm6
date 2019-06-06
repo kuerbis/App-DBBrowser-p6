@@ -120,7 +120,7 @@ method on_table ( $sql is rw ) {
             $sql = $backup_sql;
         }
         elsif $custom eq $cu<print_tbl> {
-            clear();
+            print clear;
             print "\rComputing: ...\r" if $!o<table><progress-bar>;
             my $statement = $ax.get_stmt( $sql, 'Select', 'prepare' );
             my @arguments = |$sql<where_args>, |$sql<having_args>;

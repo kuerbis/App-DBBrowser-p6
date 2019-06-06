@@ -1,5 +1,5 @@
 use v6;
-unit class App::DBBrowser:ver<0.0.7>;
+unit class App::DBBrowser:ver<0.0.8>;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
@@ -29,7 +29,7 @@ has @.sqlite_databases;
 has $!d;
 has $!o;
 has $!i = %(
-    default     => %( :1loop, :prompt( 'Choose:' ),  :undef( '<<' ) ),
+    default     => %( :1loop, :prompt( 'Choose:' ), :undef( '<<' ) ),
     lyt_h       => %( :0order, :2justify ),
     lyt_v       => %( :undef( '  BACK' ), :2layout ),
     lyt_v_clear => %( :undef( '  BACK' ), :2layout, :1clear-screen ),
@@ -56,8 +56,8 @@ method !init {
     if ! $!i<home_dir>.d {
         say "'Could not find the home directory!";
         say "'browse-db' requires a home directory.";
-        show-cursor();
-        clr-lines-to-bot();
+        print show-cursor;
+        print clr-lines-to-bot;
         exit;
     }
     $!i<app_dir> = $!i<home_dir>.add( '.config' ).add( 'browse-db6' );
@@ -95,8 +95,8 @@ method !init {
 
 
 END {
-    show-cursor();
-    clr-lines-to-bot();
+    print show-cursor;
+    print clr-lines-to-bot;
 }
 
 
@@ -104,18 +104,18 @@ method run {
     signal(SIGINT).tap: {
         $!i<f_tmp_copy_paste>.IO.unlink if $!i<f_tmp_copy_paste>.defined && $!i<f_tmp_copy_paste>.IO.e;
         %*ENV<TC_RESET_AUTO_UP>:delete  if %*ENV<TC_RESET_AUTO_UP>:exists;
-        show-cursor();
-        clr-lines-to-bot();
+        print show-cursor;
+        print clr-lines-to-bot;
         "\n".note;
         exit 1;
     };
-    hide-cursor();
+    print hide-cursor;
     self!init();
     my $tc = Term::Choose.new( |$!i<default> );
     my $ax = App::DBBrowser::Auxil.new( :$!i, :$!o, :$!d );
     my $auto_one = 0;
     my $old_idx_plugin = 0;
-    clear();
+    print clear;
 
     PLUGIN: loop {
 
@@ -523,8 +523,8 @@ method run {
     }
     # END of App
     %*ENV<TC_RESET_AUTO_UP>:delete;
-    show-cursor();
-    clr-lines-to-bot();
+    print show-cursor;
+    print clr-lines-to-bot;
 }
 
 

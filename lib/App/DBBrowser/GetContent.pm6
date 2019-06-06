@@ -6,7 +6,7 @@ use fatal;
 #no precompilation;
 
 use Term::Choose;
-use Term::Choose::Screen :clear, :hide-cursor, :show-cursor;
+use Term::Choose::Screen :clear;
 use Term::Choose::Util;
 use Term::Form;
 
@@ -32,7 +32,7 @@ method !_print_args ( $sql ) {
         my $arg_rows = $ax.insert_into_args_info_format( $sql, '' );
         @tmp.push: |$arg_rows;
         my $str = @tmp.join( "\n" ) ~ "\n\n";
-        print clear();
+        print clear;
         print $str;
     }
 }

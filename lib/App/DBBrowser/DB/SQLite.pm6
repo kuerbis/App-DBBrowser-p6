@@ -66,7 +66,7 @@ method get_databases {
         }
     }
     $databases = [];
-    clear();
+    print clear;
     print "\rSearching: ...\r";
     try {
         for @dirs -> $dir {

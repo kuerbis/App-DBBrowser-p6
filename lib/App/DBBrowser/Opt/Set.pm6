@@ -114,7 +114,7 @@ method set_options ( $arg_groups = _groups(), $arg_options? ) { ###
         my $r_opt = App::DBBrowser::Opt::Get.new( :$!o, :$!i );
         $!o = $r_opt.read_config_files();
     }
-    clear();
+    print clear;
     my $groups;
     if $arg_groups {
         $groups = [ |$arg_groups ]; ##
@@ -142,8 +142,8 @@ method set_options ( $arg_groups = _groups(), $arg_options? ) { ###
                     self!write_config_files();
                     $!write_config = Any; #:delete;
                 }
-                clr-lines-to-bot();
-                show-cursor();
+                print clr-lines-to-bot;
+                print show-cursor;
                 exit();
             }
             if $!o<G><menu-memory> {
@@ -551,7 +551,7 @@ method set_options ( $arg_groups = _groups(), $arg_options? ) { ###
 
 method !settings_menu_wrap ( $section, @sub_menu, $prompt ) {
     my $tu = Term::Choose::Util.new( |$!i<default> );
-    my $changed = $tu.settings-menu( @sub_menu, $!o{$section}, :$prompt );
+    my $changed = $tu.settings-menu( @sub_menu, $!o{$section}, :$prompt, :1clear-screen );
     return if ! $changed;
     $!write_config++;
 }
@@ -600,7 +600,7 @@ method !group_readline ( $section, @items, $prompt ) {
     my $list = [ @items.map: { [ $_<prompt>:exists ?? $_<prompt> !! $_<name>, $!o{$section}{$_<name>} ] } ];
     my $new_list = $tf.fill-form(
         $list,
-        :$prompt, :2auto-up, :confirm( $!i<confirm> ), :back( $!i<back> )
+        :$prompt, :2auto-up, :confirm( $!i<confirm> ), :back( $!i<back> ), :1clear-screen
     );
     if $new_list {
         for 0 .. @items.end -> $i {
@@ -618,7 +618,7 @@ method !choose_a_dir_wrap ( $section, $opt ) {
         $info = '<< ' ~ $!o{$section}{$opt};
     }
     # Choose_a_dir
-    my $dir = $tu.choose-a-dir( :$info, :name( 'OK ' ) );
+    my $dir = $tu.choose-a-dir( :$info, :name( 'OK ' ), :1clear-screen );
     return if ! $dir.chars;
     $!o{$section}{$opt} = $dir;
     $!write_config++;

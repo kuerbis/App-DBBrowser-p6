@@ -1,12 +1,12 @@
 use v6;
-unit class App::DBBrowser::Subqueries; # p5
+unit class App::DBBrowser::Subqueries;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
 #no precompilation;
 
 use Term::Choose;
-use Term::Choose::Screen :get-term-size;
+use Term::Choose::Screen :get-term-width;
 use Term::Choose::LineFold :line-fold;
 use Term::Form;
 
@@ -145,7 +145,7 @@ method !_subqueries_file {
         my Array $history_HD = $h_ref{$driver}{$db} // [];
         my Str @tmp_info = (
             |@top_lines,
-            |$history_HD.map({ |line-fold( $_[1], get-term-size().[0], '  ', '    ' ) }),
+            |$history_HD.map({ |line-fold( $_[1], get-term-width(), '  ', '    ' ) }),
             ' '
         );
         my Str $info = @tmp_info.join: "\n";
@@ -194,10 +194,10 @@ method !_add_subqueries ( Array $history_HD, Str @top_lines ) {
     loop {
         my Str @tmp_info = (
             |@top_lines,
-            |$history_HD.map({ |line-fold( $_[1], get-term-size().[0], '  ', '    ' ) }),
+            |$history_HD.map({ |line-fold( $_[1], get-term-width(), '  ', '    ' ) }),
         );
         if $saved_new.elems {
-            @tmp_info.push: |$saved_new.map: { |line-fold( $_[1], get-term-size().[0], '| ', '    ' ) };
+            @tmp_info.push: |$saved_new.map: { |line-fold( $_[1], get-term-width(), '| ', '    ' ) };
         }
         @tmp_info.push: ' ';
         my Str $info = @tmp_info.join: "\n";
@@ -227,7 +227,7 @@ method !_add_subqueries ( Array $history_HD, Str @top_lines ) {
             if $stmt ~~ / ^ \s* \( ( <-[)(]>+ ) \) \s* $ / {
                 $stmt = $0;
             }
-            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-size().[0], '', ' ' x 'Stmt: '.chars ).join: "\n";
+            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-width(), '', ' ' x 'Stmt: '.chars ).join: "\n";
             # Readline
             my $name = $tf.readline( 'Name: ', :info( $info ~ $folded_stmt ), :1show-context );
             if ! $name.defined  {
@@ -240,7 +240,7 @@ method !_add_subqueries ( Array $history_HD, Str @top_lines ) {
             @bu.push: [ [ |$saved_new ], [ |$history_RAM ], [ |$used ] ];
             $used.push: |$history_RAM.splice: $idx - @pre.elems, 1;
             my $stmt = $used[*-1][0];
-            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-size().[0], '', ' ' x 'Stmt: '.chars ).join: "\n";
+            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-width(), '', ' ' x 'Stmt: '.chars ).join: "\n";
             # Readline
             my $name = $tf.readline( 'Name: ', :info( $info ~ $folded_stmt ), :1show-context );
             if ! $name.defined  {
@@ -307,7 +307,7 @@ method !_edit_subqueries ( Array $history_HD, Str @top_lines ) {
                 elsif $i == @indexes.any {
                     $pre = '| ';
                 }
-                my $folded_stmt = line-fold( $stmt, get-term-size().[0], $pre,  $pre ~ ( ' ' x 2 ) ).join: "\n";
+                my $folded_stmt = line-fold( $stmt, get-term-width(), $pre,  $pre ~ ( ' ' x 2 ) ).join: "\n";
                 @tmp_info.push: $folded_stmt;
             }
             @tmp_info.push: ' ';
@@ -317,7 +317,7 @@ method !_edit_subqueries ( Array $history_HD, Str @top_lines ) {
             if ! $stmt.defined || ! $stmt.chars {
                 next STMT;
             }
-            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-size().[0], '', ' ' x 'Stmt: '.chars ).join: "\n";
+            my $folded_stmt = "\n" ~ line-fold( 'Stmt: ' ~ $stmt, get-term-width(), '', ' ' x 'Stmt: '.chars ).join: "\n";
             my $default;
             if $history_HD[$idx][0] ne $history_HD[$idx][1] {
                 $default = $history_HD[$idx][1];
@@ -349,7 +349,7 @@ method !_remove_subqueries ( Array $history_HD, Str @top_lines ) {
         my Str @tmp_info = (
             |@top_lines,
             'Remove:',
-            |@remove.map({ |line-fold( $_, get-term-size().[0], '  ', '    ' ) }),
+            |@remove.map({ |line-fold( $_, get-term-width(), '  ', '    ' ) }),
             ' '
         );
         my $info = @tmp_info.join: "\n";

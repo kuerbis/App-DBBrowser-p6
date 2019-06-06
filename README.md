@@ -21,3 +21,5 @@ LICENSE AND COPYRIGHT
 Copyright (C) 2019 Matthäus Kiem.
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
+
+[?12l[?25h[J
