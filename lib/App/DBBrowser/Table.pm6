@@ -47,7 +47,8 @@ method on_table ( $sql is rw ) {
             |$!i<lyt_v>, :prompt( '' ), :1index, :default( $old_idx ), :undef( $!i<back> )
         );
         if ! $idx.defined || ! @choices[$idx].defined {
-            last CUSTOMIZE;
+            return;
+            #last CUSTOMIZE;
         }
         my $custom = @choices[$idx];
         if $!o<G><menu-memory> {

@@ -304,7 +304,7 @@ method reset_sql ( $sql is rw ) {
     $sql = $keep;
     my @string = <distinct_stmt set_stmt where_stmt group_by_stmt having_stmt order_by_stmt limit_stmt offset_stmt>;
     my @hash   = <alias>;
-    my @array  = <cols group_by_cols aggr_cols select_cols insert_into_cols create_table_cols
+    my @array  = <group_by_cols aggr_cols select_cols insert_into_cols create_table_cols
                   set_args where_args having_args insert_into_args>;
     $sql{@string} = '' xx @string.elems;
     $sql{@array}  = [] xx @array.elems;

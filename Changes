@@ -1,6 +1,9 @@
 Revision history for App-DBBrowser-p6
 
 
+0.0.9   2019-06-19
+        - Bugfix in reset_sql.
+
 0.0.8   2019-06-06
         - Escape sequence subroutines without print.
         - Perl6 minimum version 6.d.

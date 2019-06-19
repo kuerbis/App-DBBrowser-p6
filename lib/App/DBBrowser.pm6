@@ -1,5 +1,5 @@
 use v6;
-unit class App::DBBrowser:ver<0.0.8>;
+unit class App::DBBrowser:ver<0.0.9>;
 
 CONTROL { when CX::Warn { note $_; exit 1 } }
 use fatal;
@@ -539,19 +539,19 @@ method !browse_the_table ( $qt_table, $qt_columns ) {
     #$ax.print_sql( $sql ); # ?
 
     PRINT_TABLE: loop {
-        my $all_arrayref;
+        my $data = [];
         try {
             my $tt = App::DBBrowser::Table.new( :$!i, :$!o, :$!d );
-            $all_arrayref = $tt.on_table( $sql );
+            $data = $tt.on_table( $sql );
             CATCH { default {
                 $ax.print_error_message( $_, 'Print table' );
-                last PRINT_TABLE;
+                return;
             }}
         }
-        if ! $all_arrayref.defined {
-            last PRINT_TABLE;
+        if ! $data.defined {
+            return;
         }
-        $tt.print-table( $all_arrayref, |$!o<table> );
+        $tt.print-table( $data, |$!o<table> );
         $!o<table><max-rows>:delete;
     }
 }
